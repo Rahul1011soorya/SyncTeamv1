@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="panel auth-card" style="max-width: 440px; margin: 4rem auto;">
+        <h2>{{ role.capitalize() }} Portal Access</h2>
+        <p style="font-size:0.85rem; color:var(--indigo-600); font-weight:700; margin-top:-1rem; margin-bottom:1.5rem;">
+            Tenant Isolated Workspace: {{ institution.name if institution else inst_code }}
+        </p>
+        
+        <div class="alert error-alert" id="auth-error" style="display: none; background: #fee2e2; color: #991b1b; padding: 0.75rem; border-radius: 6px; margin-bottom: 1rem; border: 1px solid #fca5a5; font-size: 0.9rem; font-weight: 600;"></div>
+
+        <input type="hidden" id="active_inst_context" value="{{ inst_code }}">
+
+        <div class="input-set">
+            <label for="username" style="text-transform: uppercase; font-size: 0.8rem; font-weight: 700; color: var(--slate-700);">Account Username:</label>
+            <input type="text" id="username" placeholder="Enter security handle identifier" style="width:100%; padding: 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300);">
+        </div>
+        
+        <div class="input-set" style="margin-top: 1.25rem;">
+            <label for="password" style="text-transform: uppercase; font-size: 0.8rem; font-weight: 700; color: var(--slate-700);">Security Account Password:</label>
+            <input type="password" id="password" placeholder="••••••••" style="width:100%; padding: 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300);">
+        </div>
+        
+        <button class="btn primary-btn full-btn" style="width:100%; margin-top: 1.5rem; padding: 0.85rem;" onclick="executeAuthentication()">Authenticate Core Tokens</button>
+        
+        {% if role != 'admin' %}
+        <div class="toggle-auth-view" style="text-align: center; margin-top: 1.25rem; font-size: 0.875rem;">
+            New to this branch? <a href="/signup/{{ role }}?inst_code={{ inst_code }}" style="color: var(--indigo-600); font-weight: 600;">Create an institutional profile</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+{% endblock %}

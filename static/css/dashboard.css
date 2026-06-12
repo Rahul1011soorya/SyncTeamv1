@@ -1,0 +1,404 @@
+/* ==========================================================================
+   SyncTeam Workspace Master Stylesheet - Clean Premium Enterprise Theme
+   ========================================================================== */
+
+:root {
+    --slate-50: #f8fafc;
+    --slate-100: #f1f5f9;
+    --slate-200: #e2e8f0;
+    --slate-300: #cbd5e1;
+    --slate-600: #475569;
+    --slate-700: #334155;
+    --slate-800: #1e293b;
+    --slate-900: #0f172a;
+    
+    --indigo-500: #6366f1;
+    --indigo-600: #4f46e5;
+    --indigo-700: #4338ca;
+    
+    --emerald-500: #10b981;
+    --emerald-600: #059669;
+    
+    --rose-600: #dc2626;
+    --rose-700: #b91c1c;
+    
+    --radius-sm: 6px;
+    --radius-md: 12px;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--slate-50);
+    color: var(--slate-900);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* --- Global Navbar Layout --- */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--slate-900);
+    padding: 1rem 3rem;
+    color: #ffffff;
+    box-shadow: var(--shadow-md);
+}
+
+.nav-brand {
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    background: linear-gradient(to right, #38bdf8, var(--indigo-500));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.nav-user {
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.logout-link {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.4rem 1rem;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+
+.logout-link:hover {
+    background: var(--rose-600);
+}
+
+/* --- Content Wrapper Container --- */
+.content-wrapper {
+    max-width: 1200px;
+    margin: 3rem auto;
+    padding: 0 2rem;
+}
+
+/* --- Premium Panel / Card Base --- */
+.panel {
+    background: #ffffff;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--radius-md);
+    padding: 2.25rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.panel h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+    color: var(--slate-800);
+}
+
+.panel-desc {
+    color: var(--slate-600);
+    font-size: 0.925rem;
+    margin-bottom: 2rem;
+}
+
+/* --- Grid & Form Controls --- */
+.dashboard-grid {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+}
+
+.input-set {
+    margin-bottom: 1.25rem;
+}
+
+.input-set label {
+    display: block;
+    font-size: 0.825rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--slate-600);
+    margin-bottom: 0.5rem;
+}
+
+input[type="text"],
+input[type="password"],
+textarea,
+select.form-select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    background-color: #ffffff;
+    border: 1px solid var(--slate-300);
+    border-radius: var(--radius-sm);
+    color: var(--slate-900);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input:focus, textarea:focus, select:focus {
+    border-color: var(--indigo-500);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+/* --- Action Buttons Components --- */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.925rem;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.primary-btn { background-color: var(--indigo-600); color: #ffffff; }
+.primary-btn:hover { background-color: var(--indigo-700); }
+
+.success-btn { background-color: var(--emerald-600); color: #ffffff; }
+.success-btn:hover { background-color: #047857; }
+
+.full-btn { width: 100%; display: flex; }
+
+/* --- Authentication Layout Frame --- */
+.auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 75vh;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 460px;
+    box-shadow: var(--shadow-lg);
+}
+
+.toggle-auth-view {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 0.875rem;
+    color: var(--slate-600);
+}
+
+.toggle-auth-view a {
+    color: var(--indigo-600);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+/* --- Main Gateway Selection Canvas --- */
+.gateway-wrapper {
+    max-width: 1000px;
+    margin: 4rem auto;
+    padding: 0 2rem;
+    text-align: center;
+}
+
+.gateway-title {
+    font-size: 2.25rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    margin-bottom: 0.75rem;
+}
+
+.role-split-wrapper {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.role-card {
+    background: #ffffff;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--radius-md);
+    padding: 2.5rem 1.5rem;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+
+.role-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--indigo-500);
+}
+
+.role-icon-frame {
+    font-size: 2.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.role-card h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: var(--slate-800);
+}
+
+.role-card p {
+    font-size: 0.875rem;
+    color: var(--slate-600);
+    line-height: 1.4;
+}
+
+/* --- Admin Data Table Layout --- */
+.admin-table-container {
+    width: 100%;
+    overflow-x: auto;
+    margin-top: 1.5rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--slate-200);
+}
+
+.admin-data-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.925rem;
+}
+
+.admin-data-table th {
+    background-color: var(--slate-100);
+    color: var(--slate-700);
+    font-weight: 700;
+    padding: 0.85rem 1.25rem;
+    border-bottom: 1px solid var(--slate-200);
+}
+
+.admin-data-table td {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--slate-100);
+    color: var(--slate-600);
+}
+
+.admin-data-table tr:hover td {
+    background-color: var(--slate-50);
+}
+
+/* --- Multi-Tenant Search Filters & Interactive Matrix Additions --- */
+.filter-search-matrix-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr) auto;
+    gap: 1rem;
+    align-items: end;
+    background: var(--slate-100);
+    padding: 1.25rem;
+    border-radius: var(--radius-sm);
+    margin-bottom: 2rem;
+    border: 1px solid var(--slate-200);
+}
+
+.filter-search-matrix-grid .input-set {
+    margin-bottom: 0;
+}
+
+.schedule-matrix-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+}
+
+.checkbox-matrix {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.matrix-cb-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--slate-700);
+    cursor: pointer;
+}
+
+.allocated-team-block {
+    background: var(--slate-50);
+    border: 1px solid var(--slate-200);
+    border-radius: var(--radius-sm);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.allocated-team-block h5 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--slate-800);
+    margin-bottom: 0.75rem;
+}
+
+.team-members-list {
+    list-style: none;
+    padding: 0;
+}
+
+.action-icon-btn {
+    background: none;
+    border: none;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* ==========================================================================
+   SyncTeam Workspace - Header Nav & Footer Styling Additions
+   ========================================================================== */
+
+/* Universal Public Header Nav Item Links */
+.header-nav-item {
+    color: var(--slate-300);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 0.35rem 0.65rem;
+    border-radius: var(--radius-sm);
+    transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.header-nav-item:hover {
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Base Presentation Footer Shell */
+.system-footer-deck {
+    background-color: var(--slate-900);
+    color: var(--slate-300);
+    padding: 2rem 0;
+    border-top: 1px solid var(--slate-800);
+    width: 100%;
+    flex-shrink: 0;
+    box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05);
+}

@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <a href="/" style="color: var(--indigo-600); text-decoration: none; font-weight: 600; font-size: 0.9rem;">← Return to Hub Gateway</a>
+</div>
+
+<div class="panel" style="border-top: 4px solid var(--slate-900); max-width: 640px; margin: 0 auto;">
+    <h2>Onboard New Educational Institution</h2>
+    <p class="panel-desc">Register a secure new database tenant segment and configure its initial administrative access root profile node tokens maps.</p>
+
+    <div class="form-row">
+        <div class="input-set">
+            <label for="inst_name">Official Institution Title Name:</label>
+            <input type="text" id="inst_name" placeholder="e.g., College of Engineering Trivandrum">
+        </div>
+        <div class="input-set">
+            <label for="inst_code">Unique Workspace Short Code (ID) Letters:</label>
+            <input type="text" id="inst_code" placeholder="e.g., CET">
+        </div>
+    </div>
+
+    <div class="input-set">
+        <label for="inst_address">Complete Postal Site Address:</label>
+        <input type="text" id="inst_address" placeholder="Physical location metadata parameters">
+    </div>
+
+    <h3 style="margin-top: 2rem; border-top: 1px solid var(--slate-100); padding-top: 1.5rem; color: var(--indigo-600);">Assign Root Workspace Administrator Credential</h3>
+    <p class="panel-desc">These tracking values will unlock total access permissions explicitly inside this institution context sandbox.</p>
+
+    <div class="form-row">
+        <div class="input-set">
+            <label for="adm_username">Admin Account Username:</label>
+            <input type="text" id="adm_username" placeholder="e.g., cet_admin">
+        </div>
+        <div class="input-set">
+            <label for="adm_password">Admin Security Password:</label>
+            <input type="password" id="adm_password" placeholder="••••••••">
+        </div>
+    </div>
+
+    <button class="btn success-btn full-btn" style="background: var(--slate-900); padding: 1rem; font-size: 1rem; margin-top: 1.5rem;" onclick="dispatchInstitutionRegistration()">
+        🔒 Initialize Workspace Sandbox Database Partition
+    </button>
+</div>
+
+<script>
+function dispatchInstitutionRegistration() {
+    const payload = {
+        name: document.getElementById('inst_name').value.trim(),
+        code: document.getElementById('inst_code').value.trim(),
+        address: document.getElementById('inst_address').value.trim(),
+        admin_username: document.getElementById('adm_username').value.trim(),
+        admin_password: document.getElementById('adm_password').value.trim()
+    };
+
+    fetch('/api/institution/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert(data.message);
+        if (data.success) window.location.href = '/';
+    });
+}
+</script>
+{% endblock %}

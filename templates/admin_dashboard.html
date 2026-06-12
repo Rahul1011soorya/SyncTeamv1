@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="admin-workspace-layout">
+    <div class="panel" style="border-top: 4px solid var(--indigo-600);">
+        <h2>Tenant Structural Modeling Engine</h2>
+        <p class="panel-desc">Define structural character string format criteria constraints blueprints to act as structural guidance placeholders for registration workflows.</p>
+        
+        <div class="form-row">
+            <div class="input-set">
+                <label for="fmt_roll">Student Roll No Template Example:</label>
+                <input type="text" id="fmt_roll" value="B24CS1201">
+            </div>
+            <div class="input-set">
+                <label for="fmt_fac">Faculty ID Template Example:</label>
+                <input type="text" id="fmt_fac" value="FAC-CS-XXXX">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="input-set">
+                <label for="fmt_batch">Batch Variant Format:</label>
+                <input type="text" id="fmt_batch" value="Batch XX">
+            </div>
+            <div class="input-set">
+                <label for="fmt_class">Class Room Format:</label>
+                <input type="text" id="fmt_class" value="CSX / ECX">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="input-set">
+                <label for="fmt_year">Academic Year Bounds Format:</label>
+                <input type="text" id="fmt_year" value="202X-202X">
+            </div>
+            <div class="input-set">
+                <label for="fmt_sem">Semester Progression Scope:</label>
+                <input type="text" id="fmt_sem" value="S1 to S8">
+            </div>
+        </div>
+
+        <button class="btn primary-btn" onclick="saveConventionFormats()">Lock Global Placeholder Expressions</button>
+    </div>
+
+    <div class="panel" style="border-top:4px solid var(--emerald-600);">
+        <h2>Institutional Student Directory Discovery</h2>
+        <p class="panel-desc">Query active student user partitions matching institutional metrics properties fields.</p>
+        
+        <div class="filter-search-matrix-grid">
+            <div class="input-set"><label>Stream:</label><input type="text" id="filter_stream" placeholder="B.Tech"></div>
+            <div class="input-set"><label>Class:</label><input type="text" id="filter_class" placeholder="CS2"></div>
+            <div class="input-set"><label>Batch:</label><input type="text" id="filter_batch" placeholder="Batch 01"></div>
+            <div class="input-set"><label>Sem:</label><input type="text" id="filter_semester" placeholder="S4"></div>
+            <div class="input-set"><label>Year:</label><input type="text" id="filter_year" placeholder="2024-2028"></div>
+            <button class="btn success-btn" onclick="discoverStudentsByAttributes()">Query Matrix</button>
+        </div>
+
+        <table class="admin-data-table" style="width:100%;">
+            <thead>
+                <tr><th>Student Identity Name</th><th>Roll No Mapping Token</th><th>Stream</th><th>Class (Batch)</th><th>Timeline Horizon</th></tr>
+            </thead>
+            <tbody id="discovered-students-rows">
+                <tr><td colspan="5" style="text-align:center; color:var(--slate-600);">Adjust criteria inputs above and trigger 'Query Matrix' execution bounds.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/faculty.js') }}"></script>
+<script>
+function saveConventionFormats() {
+    fetch('/api/admin/configure-formats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            roll_format: document.getElementById('fmt_roll').value,
+            faculty_format: document.getElementById('fmt_fac').value,
+            batch_format: document.getElementById('fmt_batch').value,
+            class_format: document.getElementById('fmt_class').value,
+            year_format: document.getElementById('fmt_year').value,
+            semester_format: document.getElementById('fmt_sem').value
+        })
+    })
+    .then(res => res.json()).then(data => alert(data.message));
+}
+</script>
+{% endblock %}

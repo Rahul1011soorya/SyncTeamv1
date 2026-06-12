@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="gateway-wrapper">
+    <h1 class="gateway-title">SyncTeam Multi-Tenant Workspace Gateway</h1>
+    <p style="color: var(--slate-600); font-size: 1.1rem; max-width: 540px; margin: 0 auto 2rem auto;">
+        Select your isolated institutional repository node to route securely into your platform workspace.
+    </p>
+
+    <div class="panel" style="max-width: 500px; margin: 0 auto 3rem auto; padding: 1.5rem;">
+        <div class="input-set" style="margin-bottom: 0;">
+            <label for="tenant_selector">Choose Active Institution Domain:</label>
+            <select id="tenant_selector" class="form-select" onchange="updateTenantRedirectLinks(this.value)">
+                {% for inst in institutions %}
+                    <option value="{{ inst.institution_code }}" {% if inst.institution_code == 'MBCET' %}selected{% endif %}>
+                        {{ inst.name }} [{{ inst.institution_code }}]
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div class="role-split-wrapper">
+        <a href="/portal/student?inst_code=MBCET" id="link-student" class="role-card">
+            <div class="role-icon-frame">🎓</div>
+            <h3>Student Portal</h3>
+            <p>Access self-assessment profile forms inside your specific tenant framework.</p>
+        </a>
+
+        <a href="/portal/faculty?inst_code=MBCET" id="link-faculty" class="role-card">
+            <div class="role-icon-frame">🧑‍🏫</div>
+            <h3>Faculty Node</h3>
+            <p>Deploy localized project parameters and compute balanced team distributions.</p>
+        </a>
+
+        <a href="/portal/admin?inst_code=MBCET" id="link-admin" class="role-card">
+            <div class="role-icon-frame">⚙️</div>
+            <h3>System Admin</h3>
+            <p>Configure compliance validation rules and manage institutional metadata format styles.</p>
+        </a>
+    </div>
+</div>
+
+<div style="margin-top: 4rem; border-top: 1px solid var(--slate-200); padding-top: 2rem; text-align: center;">
+        <p style="color: var(--slate-600); font-size: 0.9rem;">Need to deploy an entirely new system environment?</p>
+        <a href="/register-institution" class="btn primary-btn" style="background: var(--slate-800); text-decoration: none; padding: 0.75rem 1.5rem; display: inline-block;">
+            ⚙️ Onboard New Institution & Setup Workspace
+        </a>
+    </div>
+
+<script>
+function updateTenantRedirectLinks(instCode) {
+    document.getElementById('link-student').href = `/portal/student?inst_code=${instCode}`;
+    document.getElementById('link-faculty').href = `/portal/faculty?inst_code=${instCode}`;
+    document.getElementById('link-admin').href = `/portal/admin?inst_code=${instCode}`;
+}
+</script>
+{% endblock %}

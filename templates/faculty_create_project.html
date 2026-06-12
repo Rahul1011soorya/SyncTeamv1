@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <a href="/faculty/dashboard" style="color: var(--indigo-600); text-decoration: none; font-weight: 600; font-size: 0.9rem;">
+        ← Cancel and Return to Dashboard
+    </a>
+</div>
+
+<div class="panel" style="border-top: 4px solid var(--indigo-600); max-width: 800px; margin: 0 auto;">
+    <h2>Deploy New Project Framework</h2>
+    <p class="panel-desc">Initialize a new project campaign assignment vector, establish cohort constraints limits, and define target capability matrix requirements.</p>
+
+    <div class="input-set">
+        <label for="p_name">Project Title Assignment Name:</label>
+        <input type="text" id="p_name" placeholder="e.g., LocalBiz Connect Web Application Development">
+    </div>
+
+    <div class="input-set">
+        <label for="p_desc">Detailed Project Specification Description:</label>
+        <textarea id="p_desc" rows="5" placeholder="Provide a comprehensive operational brief outlining expectations, target infrastructure stack layers, and final deliverable criteria blocks..."></textarea>
+    </div>
+
+    <div class="form-row">
+        <div class="input-set">
+            <label for="p_batch">Target Classroom Batch Code / Cohort Group:</label>
+            <input type="text" id="p_batch" placeholder="Format example: CS2-Batch01">
+        </div>
+        <div class="input-set">
+            <label for="p_team_size">Required Number of Members per Team:</label>
+            <select id="p_team_size" class="form-select">
+                <option value="2">2 Members</option>
+                <option value="3">3 Members</option>
+                <option value="4" selected>4 Members</option>
+                <option value="5">5 Members</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="input-set">
+        <label for="p_deadline">Submission Grace Period Window Deadline Bounds:</label>
+        <input type="text" id="p_deadline" placeholder="e.g., June 25, 2026 at 11:59 PM">
+    </div>
+
+    <h3 style="margin-top: 2.5rem; border-top: 1px solid var(--slate-100); padding-top: 1.5rem;">
+        Bind Mandatory Technical Skill Capability Profiles
+    </h3>
+    <p class="panel-desc" style="margin-bottom: 1rem;">Toggle baseline requirements from the global dictionary master ledger below or append a completely new custom tag.</p>
+
+    <div class="checkbox-matrix">
+        {% if skills %}
+            {% for skill in skills %}
+            <label class="matrix-cb-label">
+                <input type="checkbox" class="skill-checkbox" value="{{ skill.skill_name }}">
+                {{ skill.skill_name }}
+            </label>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <div style="background: var(--slate-100); padding: 1.25rem; border-radius: 8px; border: 1px dashed var(--slate-300); margin-bottom: 2.5rem; display: flex; gap: 1rem; align-items: flex-end;">
+        <div class="input-set" style="margin-bottom: 0; flex-grow: 1;">
+            <label for="custom_skill_entry" style="color: var(--slate-800); font-size: 0.8rem;">Append Untracked Custom Skill Vector:</label>
+            <input type="text" id="custom_skill_entry" placeholder="e.g., Cloud Server Server-Side DevOps Engineering" style="background: #ffffff;">
+        </div>
+        <button type="button" class="btn primary-btn" style="background: var(--slate-800); height: fit-content; padding: 0.85rem 1.25rem;" onclick="injectCustomSkillToForm()">
+            + Inject Skill Tag
+        </button>
+    </div>
+
+    <button class="btn success-btn full-btn" style="padding: 1.15rem; font-size: 1.05rem;" onclick="compileAndPublishProject()">
+        🚀 Finalize Framework and Deploy Campaign
+    </button>
+</div>
+
+<script src="{{ url_for('static', filename='js/faculty.js') }}"></script>
+{% endblock %}

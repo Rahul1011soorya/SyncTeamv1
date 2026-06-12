@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <a href="/student/dashboard" style="color: var(--indigo-600); text-decoration: none; font-weight: 600; font-size: 0.9rem;">← Return to Coursework Feed</a>
+</div>
+
+<div class="dashboard-grid" style="grid-template-columns: 1fr;">
+    <div class="panel" style="border-top: 4px solid var(--indigo-600); margin-bottom: 1.5rem;">
+        <h2>{{ project.project_name }}</h2>
+        <div style="color: var(--slate-800); font-size: 1rem; line-height: 1.6; white-space: pre-line;">{{ project.description }}</div>
+    </div>
+
+    <input type="hidden" id="project-selector" value="{{ project.id }}">
+
+    <div class="panel" style="border-top: 4px solid var(--slate-800); background:#fcfcfc;">
+        <h2>Team Leadership Progress Desk</h2>
+        <p class="panel-desc">If nominated as Team Lead by the faculty, update project percentage completion progress logs below.</p>
+        
+        <div class="form-row" style="align-items:end; gap:2rem;">
+            <div class="input-set" style="flex-grow:1; margin-bottom:0;">
+                <label>Completion Percentage Target Score Matrix: <span id="pct_val" style="color:var(--indigo-600); font-weight:800;">0</span>%</label>
+                <input type="range" id="progress_percentage_slider" min="0" max="100" value="0" style="width:100%; margin-top:1rem;" oninput="document.getElementById('pct_val').innerText = this.value">
+            </div>
+            <div class="input-set" style="flex-grow:2; margin-bottom:0;">
+                <label for="progress_summary_text">Status Progress Brief Summary Description:</label>
+                <input type="text" id="progress_summary_text" placeholder="e.g., Database entities mapped, UI routers currently running into local sandbox environment.">
+            </div>
+            <button class="btn primary-btn" style="background:var(--slate-900);" onclick="dispatchMilestoneProgress('{{ project.id }}', 1)">Submit Milestone Update</button>
+        </div>
+    </div>
+
+    <div class="panel" id="student-intake-card" style="border-top: 4px solid var(--emerald-600);">
+        <h2>Self-Assessment Evaluation Index</h2>
+        <div id="dynamic-sliders-stack" class="sliders-stack-layout"></div>
+        
+        <h3 style="margin-top: 2.5rem; border-top: 1px solid var(--slate-100); padding-top: 1.5rem;">Weekly Temporal Synchronization Grid (24-Hour Block)</h3>
+        <div class="schedule-matrix-grid" id="calendar-binary-grid"></div>
+
+        <button class="btn success-btn full-btn" style="margin-top: 2rem; padding: 1rem;" onclick="dispatchStudentAssessment()">Lock Profile Parameters & Save Assessment</button>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/student.js') }}"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    fetchDynamicProjectRequirements();
+});
+</script>
+{% endblock %}

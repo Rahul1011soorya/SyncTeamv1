@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="faculty-workspace">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
+        <div>
+            <h1 style="margin: 0; font-size: 1.75rem; font-weight: 800;">Faculty Operations Control Deck</h1>
+            <p style="margin: 0.25rem 0 0 0; color: var(--slate-600); font-size: 0.9rem;">Filter directory rosters, track student compliance timelines, and assign team leadership tags.</p>
+        </div>
+        <a href="/faculty/create-project" class="btn primary-btn" style="text-decoration: none;">+ Deploy New Project Campaign</a>
+    </div>
+
+    <div class="panel" style="border-top:4px solid var(--slate-800);">
+        <h3>Advanced Cohort Directory Roster Search</h3>
+        <div class="filter-search-matrix-grid">
+            <div class="input-set"><label>Stream:</label><input type="text" id="filter_stream" placeholder="B.Tech"></div>
+            <div class="input-set"><label>Class:</label><input type="text" id="filter_class" placeholder="CS2"></div>
+            <div class="input-set"><label>Batch:</label><input type="text" id="filter_batch" placeholder="01"></div>
+            <div class="input-set"><label>Sem:</label><input type="text" id="filter_semester" placeholder="S4"></div>
+            <div class="input-set"><label>Year:</label><input type="text" id="filter_year" placeholder="2024-2028"></div>
+            <button class="btn primary-btn" style="background:var(--slate-800);" onclick="discoverStudentsByAttributes()">Search Directory</button>
+        </div>
+        <div class="admin-table-container">
+            <table class="admin-data-table" style="width:100%;">
+                <thead>
+                    <tr><th>Legal Student Name</th><th>Roll No Code</th><th>Stream</th><th>Class-Batch Target</th><th>Semester Span</th></tr>
+                </thead>
+                <tbody id="discovered-students-rows">
+                    <tr><td colspan="5" style="text-align:center; color:var(--slate-600); font-style:italic;">Fill parameter bars above to fetch active matches.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="project-management-stack">
+        {% if projects %}
+            {% for proj in projects %}
+            <div class="panel" style="margin-bottom: 2rem; border-top: 4px solid var(--indigo-600);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--slate-100); padding-bottom: 1rem; margin-bottom: 1.25rem;">
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.35rem; font-weight: 700; color: var(--slate-800);">{{ proj.project_name }}</h3>
+                        <p style="margin: 0.35rem 0 0 0; color: var(--slate-600); font-size: 0.875rem;">Cohort: <code>{{ proj.class_batch }}</code></p>
+                    </div>
+                    <div style="text-align: right; font-size: 0.85rem; color: var(--slate-700); font-weight: 600;">
+                        <div>Deadline Bounds: <span style="color: var(--rose-700);">{{ proj.deadline }}</span></div>
+                        <div style="margin-top: 0.25rem; opacity: 0.8;">Target Team Size: {{ proj.team_size }} Members</div>
+                    </div>
+                </div>
+
+                <div id="compliance-outstanding-log-{{ proj.id }}" class="compliance-box" data-project-id="{{ proj.id }}" style="background:#fff7ed; padding:1rem; border-radius:6px; margin-bottom:1.5rem; border:1px solid #ffedd5;">
+                    <span class="muted-text" style="font-size:0.85rem;">Calculating non-participation compliance logs...</span>
+                </div>
+
+                <div style="display: flex; gap: 1rem; background: var(--slate-50); padding: 1rem; border-radius: 8px; border: 1px solid var(--slate-200); margin-bottom: 1.5rem;">
+                    <button class="btn success-btn" onclick="runTeamMatchmakingOptimization('{{ proj.id }}')">⚡ Compute Balanced Teams</button>
+                    <button class="btn primary-btn" style="background-color: var(--slate-700);" onclick="loadRosterPrintData('{{ proj.id }}')">🔍 Fetch Current Allocation Log</button>
+                    <button class="btn primary-btn" style="background-color: #4b5563; margin-left: auto;" onclick="triggerSystemPrintOperation('{{ proj.id }}')">🖨️ Print Team Report</button>
+                </div>
+
+                <div id="teams-allocation-view-{{ proj.id }}" style="margin-top: 1.5rem;"></div>
+            </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/faculty.js') }}"></script>
+<script>
+// Standard JavaScript reads the DOM data-attributes, keeping the script clean of syntax conflicts!
+document.addEventListener("DOMContentLoaded", function() {
+    document.querySelectorAll('.compliance-box').forEach(function(element) {
+        var projectId = element.getAttribute('data-project-id');
+        fetchComplianceTimelineLog(projectId);
+    });
+});
+</script>
+{% endblock %}

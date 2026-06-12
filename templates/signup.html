@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="panel auth-card" style="max-width: 580px;">
+        <h2>Register {{ role.capitalize() }} Node</h2>
+        <p style="font-size:0.85rem; color:var(--indigo-600); font-weight:700; margin-top:-1rem; margin-bottom:1.5rem;">
+            Enrolling inside Local Domain: {{ institution.name }}
+        </p>
+
+        <input type="hidden" id="active_inst_context" value="{{ inst_code }}">
+
+        <div class="input-set">
+            <label for="reg_real_name">Full Legal / Real Name:</label>
+            <input type="text" id="reg_real_name" placeholder="Enter your full name">
+        </div>
+
+        <div class="form-row">
+            <div class="input-set">
+                <label for="reg_username">Account Username:</label>
+                <input type="text" id="reg_username" placeholder="e.g., student_user">
+            </div>
+            <div class="input-set">
+                <label for="reg_password">Security Password:</label>
+                <input type="password" id="reg_password" placeholder="••••••••">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="input-set">
+                <label for="reg_stream">Academic Stream <span style="color:var(--indigo-600); font-size:0.75rem;">(Required Format: {{ institution.stream_format }})</span>:</label>
+                <input type="text" id="reg_stream" placeholder="e.g., B.Tech">
+            </div>
+            <div class="input-set">
+                <label for="reg_class">Class / Division <span style="color:var(--indigo-600); font-size:0.75rem;">(Required Format: {{ institution.class_format }})</span>:</label>
+                <input type="text" id="reg_class" placeholder="e.g., CS2">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="input-set">
+                <label for="reg_batch">Assigned Batch <span style="color:var(--indigo-600); font-size:0.75rem;">(Required Format: {{ institution.batch_format }})</span>:</label>
+                <input type="text" id="reg_batch" placeholder="e.g., 01">
+            </div>
+            <div class="input-set">
+                <label for="reg_semester">Active Semester <span style="color:var(--indigo-600); font-size:0.75rem;">(Required Format: {{ institution.semester_format }})</span>:</label>
+                <input type="text" id="reg_semester" placeholder="e.g., S4">
+            </div>
+        </div>
+
+        <div class="input-set">
+            <label for="reg_year">Academic Year Timeline <span style="color:var(--indigo-600); font-size:0.75rem;">(Required Format: {{ institution.academic_year_format }})</span>:</label>
+            <input type="text" id="reg_year" placeholder="e.g., 2024-2028">
+        </div>
+
+        {% if role == 'faculty' %}
+            <div class="form-row">
+                <div class="input-set">
+                    <label for="reg_faculty_id">Faculty ID Token <span style="color:var(--indigo-600); font-size:0.75rem;">(Required Format: {{ institution.faculty_id_format }})</span>:</label>
+                    <input type="text" id="reg_faculty_id" placeholder="Enter assigned Faculty ID">
+                </div>
+                <div class="input-set">
+                    <label for="reg_subject">Core Course Subject Code <span style="color:var(--indigo-600); font-size:0.75rem;">(Required Format: {{ institution.subject_format }})</span>:</label>
+                    <input type="text" id="reg_subject" placeholder="e.g., CST202">
+                </div>
+            </div>
+        {% else %}
+            <div class="input-set">
+                <label for="reg_roll_no">Institutional Student Roll Number <span style="color:var(--indigo-600); font-size:0.75rem;">(Required Format: {{ institution.roll_no_format }})</span>:</label>
+                <input type="text" id="reg_roll_no" placeholder="Enter assigned student roll number">
+            </div>
+        {% endif %}
+
+        <button class="btn success-btn full-btn" style="margin-top: 1.5rem;" onclick="executeRegistration()">Commit Registration Profile</button>
+        <div class="toggle-auth-view">
+            Already have an active credential mapping? <a href="/portal/{{ role }}?inst_code={{ inst_code }}">Return to Sign-In</a>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+{% endblock %}
