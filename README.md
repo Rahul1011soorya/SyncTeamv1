@@ -62,3 +62,9 @@ SYNCTEAM
 * Developed the admin dashboard features, system setting interfaces, batch-filtering search matrices, and implemented the core multi-tenant backend database architecture.
   
 * Understood the structural layout of relational database models and how to implement strict table isolation boundaries to keep separate college data sandboxes secure.
+
+  **Elias Simon**:
+
+- Developed the Student Module, including the Student Dashboard and Student Project View interfaces, and integrated student-side functionalities with the Flask backend through `app.py`.
+
+- Gained practical understanding of Flask routing, frontend-backend integration, database interactions, and the overall architecture of role-based web applications.
