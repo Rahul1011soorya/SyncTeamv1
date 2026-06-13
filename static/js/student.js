@@ -95,6 +95,25 @@ function dispatchStudentAssessment() {
     });
 }
 
+function dispatchFlashcardAnswers() {
+    const projectId = document.getElementById('project-selector').value;
+    const answers = {};
+    document.querySelectorAll('.student-flashcard-answer').forEach(field => {
+        answers[field.getAttribute('data-flashcard-id')] = field.value.trim();
+    });
+
+    fetch('/api/student/submit-flashcards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ project_id: projectId, answers })
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert(data.message);
+        if (data.success) window.location.reload();
+    });
+}
+
 // 4. SUBMIT TEAM LEAD MILESTONE PROGRESS UPDATE
 function dispatchMilestoneProgress(projectId, teamNumber) {
     const pct = document.getElementById('progress_percentage_slider').value;

@@ -1,77 +1,153 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="faculty-workspace">
-    
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
-        <div>
-            <h1 style="margin: 0; font-size: 1.75rem; font-weight: 800;">Faculty Operations Control Deck</h1>
-            <p style="margin: 0.25rem 0 0 0; color: var(--slate-600); font-size: 0.9rem;">Filter directory rosters, track student compliance timelines, and assign team leadership tags.</p>
-        </div>
-        <a href="/faculty/create-project" class="btn primary-btn" style="text-decoration: none;">+ Deploy New Project Campaign</a>
-    </div>
+<a href="/faculty/create-project" class="floating-deploy-btn faculty-fab" title="Create or deploy project">+</a>
 
-    <div class="panel" style="border-top:4px solid var(--slate-800);">
-        <h3>Advanced Cohort Directory Roster Search</h3>
-        <div class="filter-search-matrix-grid">
-            <div class="input-set"><label>Stream:</label><input type="text" id="filter_stream" placeholder="B.Tech"></div>
-            <div class="input-set"><label>Class:</label><input type="text" id="filter_class" placeholder="CS2"></div>
-            <div class="input-set"><label>Batch:</label><input type="text" id="filter_batch" placeholder="01"></div>
-            <div class="input-set"><label>Sem:</label><input type="text" id="filter_semester" placeholder="S4"></div>
-            <div class="input-set"><label>Year:</label><input type="text" id="filter_year" placeholder="2024-2028"></div>
-            <button class="btn primary-btn" style="background:var(--slate-800);" onclick="discoverStudentsByAttributes()">Search Directory</button>
-        </div>
-        <div class="admin-table-container">
-            <table class="admin-data-table" style="width:100%;">
-                <thead>
-                    <tr><th>Legal Student Name</th><th>Roll No Code</th><th>Stream</th><th>Class-Batch Target</th><th>Semester Span</th></tr>
-                </thead>
-                <tbody id="discovered-students-rows">
-                    <tr><td colspan="5" style="text-align:center; color:var(--slate-600); font-style:italic;">Fill parameter bars above to fetch active matches.</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <div class="project-management-stack">
-        {% if projects %}
-            {% for proj in projects %}
-            <div class="panel" style="margin-bottom: 2rem; border-top: 4px solid var(--indigo-600);">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--slate-100); padding-bottom: 1rem; margin-bottom: 1.25rem;">
-                    <div>
-                        <h3 style="margin: 0; font-size: 1.35rem; font-weight: 700; color: var(--slate-800);">{{ proj.project_name }}</h3>
-                        <p style="margin: 0.35rem 0 0 0; color: var(--slate-600); font-size: 0.875rem;">Cohort: <code>{{ proj.class_batch }}</code></p>
-                    </div>
-                    <div style="text-align: right; font-size: 0.85rem; color: var(--slate-700); font-weight: 600;">
-                        <div>Deadline Bounds: <span style="color: var(--rose-700);">{{ proj.deadline }}</span></div>
-                        <div style="margin-top: 0.25rem; opacity: 0.8;">Target Team Size: {{ proj.team_size }} Members</div>
-                    </div>
-                </div>
-
-                <div id="compliance-outstanding-log-{{ proj.id }}" class="compliance-box" data-project-id="{{ proj.id }}" style="background:#fff7ed; padding:1rem; border-radius:6px; margin-bottom:1.5rem; border:1px solid #ffedd5;">
-                    <span class="muted-text" style="font-size:0.85rem;">Calculating non-participation compliance logs...</span>
-                </div>
-
-                <div style="display: flex; gap: 1rem; background: var(--slate-50); padding: 1rem; border-radius: 8px; border: 1px solid var(--slate-200); margin-bottom: 1.5rem;">
-                    <button class="btn success-btn" onclick="runTeamMatchmakingOptimization('{{ proj.id }}')">⚡ Compute Balanced Teams</button>
-                    <button class="btn primary-btn" style="background-color: var(--slate-700);" onclick="loadRosterPrintData('{{ proj.id }}')">🔍 Fetch Current Allocation Log</button>
-                    <button class="btn primary-btn" style="background-color: #4b5563; margin-left: auto;" onclick="triggerSystemPrintOperation('{{ proj.id }}')">🖨️ Print Team Report</button>
-                </div>
-
-                <div id="teams-allocation-view-{{ proj.id }}" style="margin-top: 1.5rem;"></div>
+<div class="faculty-dashboard-shell">
+    <aside class="faculty-sidebar faculty-sidebar-v2">
+        <div class="sidebar-brand-block">
+            <div class="sidebar-mark">ST</div>
+            <div>
+                <div class="sidebar-title">SyncTeam</div>
+                <span>Faculty workspace</span>
             </div>
-            {% endfor %}
-        {% endif %}
-    </div>
+        </div>
+        <nav class="faculty-nav-list" aria-label="Faculty dashboard">
+            <a href="#overview" class="active">Dashboard Overview</a>
+            <a href="#projects">Project Hub</a>
+            <a href="#quiz">Quiz Arena</a>
+            <a href="#teams">Team Center</a>
+            <a href="#communications">SyncTeam Communications</a>
+        </nav>
+        <div class="sidebar-summary">
+            <span>Active projects</span>
+            <strong>{{ stats.projects }}</strong>
+        </div>
+    </aside>
+
+    <section class="faculty-main faculty-main-v2">
+        <section id="overview" class="faculty-hero-panel">
+            <div>
+                <span class="eyebrow">Faculty control room</span>
+                <h1>Project, quiz, team, and communication oversight.</h1>
+                <p>Deploy multi-cohort projects, review readiness, and build balanced teams from one focused workspace.</p>
+            </div>
+            <a href="/faculty/create-project" class="btn primary-btn hero-action">Create project</a>
+        </section>
+
+        <section class="metric-grid metric-grid-v2" aria-label="Dashboard metrics">
+            <div class="metric-tile metric-tile-v2">
+                <span>{{ stats.projects }}</span>
+                <p>Active projects</p>
+            </div>
+            <div class="metric-tile metric-tile-v2">
+                <span>{{ stats.students }}</span>
+                <p>Students in directory</p>
+            </div>
+            <div class="metric-tile metric-tile-v2">
+                <span>{{ stats.teams }}</span>
+                <p>Assigned team seats</p>
+            </div>
+            <div class="metric-tile metric-tile-v2">
+                <span>{{ stats.messages }}</span>
+                <p>Messages logged</p>
+            </div>
+        </section>
+
+        <section id="projects" class="dashboard-section project-hub-v2">
+            <div class="section-heading section-heading-v2">
+                <div>
+                    <span class="eyebrow">Project Hub</span>
+                    <h2>Assigned cohort projects</h2>
+                    <p>Students only see projects matching their academic year, department, and class.</p>
+                </div>
+            </div>
+
+            <div class="panel directory-panel-v2">
+                <div class="panel-title-row">
+                    <div>
+                        <h3>Cohort Directory</h3>
+                        <p>Filter the roster before reviewing project readiness.</p>
+                    </div>
+                    <button class="btn secondary-btn compact-btn" onclick="discoverStudentsByAttributes()">Search</button>
+                </div>
+                <div class="filter-search-matrix-grid faculty-filter-grid faculty-filter-grid-v2">
+                    <div class="input-set"><label>Department</label><input type="text" id="filter_stream" placeholder="Computer Science"></div>
+                    <div class="input-set"><label>Class</label><input type="text" id="filter_class" placeholder="CS Class 1"></div>
+                    <div class="input-set"><label>Batch</label><input type="text" id="filter_batch" placeholder="1"></div>
+                    <div class="input-set"><label>Semester</label><input type="text" id="filter_semester" placeholder="S1"></div>
+                    <div class="input-set"><label>Year</label><input type="text" id="filter_year" placeholder="2024-2028"></div>
+                </div>
+                <div class="admin-table-container table-shell-v2">
+                    <table class="admin-data-table">
+                        <thead><tr><th>Name</th><th>College ID</th><th>Age</th><th>Enrollment</th><th>Department</th><th>Class</th><th>Year</th></tr></thead>
+                        <tbody id="discovered-students-rows">
+                            <tr><td colspan="7">Use filters to inspect a cohort.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="project-list-v2">
+                {% for proj in projects %}
+                <article class="project-console project-card-v2" data-project-id="{{ proj.id }}">
+                    <div class="project-console-head project-card-head-v2">
+                        <div>
+                            <span class="project-label">Project #{{ loop.index }}</span>
+                            <h3>{{ proj.project_name }}</h3>
+                            <p>{{ proj.description }}</p>
+                        </div>
+                        <div class="project-meta project-meta-v2">
+                            <span>Deadline <strong>{{ proj.deadline }}</strong></span>
+                            <span>Team size <strong>{{ proj.team_size }}</strong></span>
+                        </div>
+                    </div>
+
+                    <div id="compliance-outstanding-log-{{ proj.id }}" class="compliance-box compliance-box-v2" data-project-id="{{ proj.id }}">Checking assessment completion...</div>
+
+                    <div class="project-actions project-actions-v2">
+                        <button class="btn success-btn" onclick="runTeamMatchmakingOptimization('{{ proj.id }}')">Generate teams</button>
+                        <button class="btn ghost-btn" onclick="loadRosterPrintData('{{ proj.id }}')">Team cards</button>
+                        <button class="btn ghost-btn" onclick="loadStatusMatrix('{{ proj.id }}')">Quiz matrix</button>
+                        <button class="btn ghost-btn" onclick="loadProjectMessages('{{ proj.id }}')">Messages</button>
+                    </div>
+
+                    <div id="teams-allocation-view-{{ proj.id }}" class="team-card-grid"></div>
+                    <div id="eligible-students-{{ proj.id }}" class="eligible-student-strip"></div>
+                    <div id="status-matrix-{{ proj.id }}" class="status-matrix"></div>
+                    <div id="messages-panel-{{ proj.id }}" class="messages-panel"></div>
+                </article>
+                {% else %}
+                <div class="panel empty-panel empty-panel-v2">No projects have been deployed yet.</div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section id="quiz" class="dashboard-section info-strip-v2">
+            <span class="eyebrow">Quiz Arena</span>
+            <h2>Review answers and save marks</h2>
+            <p>Open a project's quiz matrix to inspect submitted answers and grade each flashcard.</p>
+        </section>
+
+        <section id="teams" class="dashboard-section info-strip-v2">
+            <span class="eyebrow">Team Center</span>
+            <h2>Generate, edit, and lead teams</h2>
+            <p>Teams unlock after the deadline or once all assigned students finish the quiz.</p>
+        </section>
+
+        <section id="communications" class="dashboard-section info-strip-v2">
+            <span class="eyebrow">Communications</span>
+            <h2>Private doubts and group chats</h2>
+            <p>Open project messages to keep faculty replies attached to the correct project context.</p>
+        </section>
+    </section>
 </div>
 
 <script src="{{ url_for('static', filename='js/faculty.js') }}"></script>
 <script>
-// Standard JavaScript reads the DOM data-attributes, keeping the script clean of syntax conflicts!
 document.addEventListener("DOMContentLoaded", function() {
     document.querySelectorAll('.compliance-box').forEach(function(element) {
-        var projectId = element.getAttribute('data-project-id');
-        fetchComplianceTimelineLog(projectId);
+        fetchComplianceTimelineLog(element.getAttribute('data-project-id'));
     });
 });
 </script>

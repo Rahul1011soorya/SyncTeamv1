@@ -13,6 +13,26 @@
 
     <input type="hidden" id="project-selector" value="{{ project.id }}">
 
+    <div class="panel" id="flashcard-intake-card" style="border-top: 4px solid var(--indigo-600);">
+        <h2>Quiz Arena</h2>
+        <p class="panel-desc">Answer each flashcard. Faculty marks are saved against this project and used with your skill scores for team generation.</p>
+        {% if flashcards %}
+            {% for card in flashcards %}
+            <div class="student-flashcard">
+                <div class="flashcard-topic">{{ card.topic_tag }} | {{ card.max_marks }} marks</div>
+                <h3>{{ card.question }}</h3>
+                <textarea class="student-flashcard-answer" data-flashcard-id="{{ card.id }}" rows="4" placeholder="Write your answer here.">{% if answer_map.get(card.id) %}{{ answer_map.get(card.id).answer_text }}{% endif %}</textarea>
+                {% if answer_map.get(card.id) and answer_map.get(card.id).marks_awarded is not none %}
+                <p class="marks-note">Marked: {{ answer_map.get(card.id).marks_awarded }} / {{ card.max_marks }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+            <button class="btn primary-btn full-btn" onclick="dispatchFlashcardAnswers()">Save Quiz Answers</button>
+        {% else %}
+            <p class="muted-text">No flashcards are attached to this project.</p>
+        {% endif %}
+    </div>
+
     <div class="panel" style="border-top: 4px solid var(--slate-800); background:#fcfcfc;">
         <h2>Team Leadership Progress Desk</h2>
         <p class="panel-desc">If nominated as Team Lead by the faculty, update project percentage completion progress logs below.</p>

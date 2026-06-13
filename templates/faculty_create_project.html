@@ -1,77 +1,101 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div style="margin-bottom: 2rem;">
-    <a href="/faculty/dashboard" style="color: var(--indigo-600); text-decoration: none; font-weight: 600; font-size: 0.9rem;">
-        ← Cancel and Return to Dashboard
-    </a>
-</div>
+<div class="faculty-shell single-column-shell">
+    <aside class="faculty-sidebar">
+        <div class="sidebar-title">SyncTeam Faculty</div>
+        <a href="/faculty/dashboard#overview">Dashboard Overview</a>
+        <a href="/faculty/dashboard#projects">Project Hub</a>
+        <a href="/faculty/dashboard#quiz">Quiz Arena</a>
+        <a href="/faculty/dashboard#teams">Team Center</a>
+        <a href="/faculty/dashboard#communications">SyncTeam Communications</a>
+    </aside>
 
-<div class="panel" style="border-top: 4px solid var(--indigo-600); max-width: 800px; margin: 0 auto;">
-    <h2>Deploy New Project Framework</h2>
-    <p class="panel-desc">Initialize a new project campaign assignment vector, establish cohort constraints limits, and define target capability matrix requirements.</p>
+    <section class="faculty-main">
+        <a href="/faculty/dashboard" class="back-link">Back to dashboard</a>
 
-    <div class="input-set">
-        <label for="p_name">Project Title Assignment Name:</label>
-        <input type="text" id="p_name" placeholder="e.g., LocalBiz Connect Web Application Development">
-    </div>
+        <div class="panel deploy-panel">
+            <h2>Deploy Project</h2>
+            <p class="panel-desc">Create one project, assign it to multiple academic cohorts, and add flashcards for quiz intake.</p>
 
-    <div class="input-set">
-        <label for="p_desc">Detailed Project Specification Description:</label>
-        <textarea id="p_desc" rows="5" placeholder="Provide a comprehensive operational brief outlining expectations, target infrastructure stack layers, and final deliverable criteria blocks..."></textarea>
-    </div>
+            <div class="input-set">
+                <label for="p_name">Project title</label>
+                <input type="text" id="p_name" placeholder="LocalBiz Connect Web Application">
+            </div>
 
-    <div class="form-row">
-        <div class="input-set">
-            <label for="p_batch">Target Classroom Batch Code / Cohort Group:</label>
-            <input type="text" id="p_batch" placeholder="Format example: CS2-Batch01">
+            <div class="input-set">
+                <label for="p_desc">Project brief</label>
+                <textarea id="p_desc" rows="5" placeholder="Describe the final deliverable, constraints, and evaluation expectations."></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="input-set">
+                    <label for="p_deadline">Quiz/team unlock deadline</label>
+                    <input type="date" id="p_deadline">
+                </div>
+                <div class="input-set">
+                    <label for="p_team_size">Members per team</label>
+                    <select id="p_team_size" class="form-select">
+                        <option value="2">2 members</option>
+                        <option value="3">3 members</option>
+                        <option value="4" selected>4 members</option>
+                        <option value="5">5 members</option>
+                    </select>
+                </div>
+            </div>
+
+            <h3>Cohort Deployment</h3>
+            <div class="cohort-picker">
+                <div class="input-set">
+                    <label for="cohort_year">Academic year</label>
+                    <select id="cohort_year">
+                        {% for year in cohort_options.years %}<option value="{{ year }}">{{ year }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="input-set">
+                    <label for="cohort_department">Department</label>
+                    <select id="cohort_department">
+                        {% for department in cohort_options.departments %}<option value="{{ department }}">{{ department }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="input-set">
+                    <label for="cohort_class">Class</label>
+                    <select id="cohort_class">
+                        {% for class_name in cohort_options.classes %}<option value="{{ class_name }}">{{ class_name }}</option>{% endfor %}
+                    </select>
+                </div>
+                <button type="button" class="btn primary-btn" onclick="addCohortTarget()">Add cohort</button>
+            </div>
+            <div id="selected-cohorts" class="selected-chip-row"></div>
+
+            <h3>Skill Signals</h3>
+            <div class="checkbox-matrix">
+                {% for skill in skills %}
+                <label class="matrix-cb-label">
+                    <input type="checkbox" class="skill-checkbox" value="{{ skill.skill_name }}">
+                    {{ skill.skill_name }}
+                </label>
+                {% endfor %}
+            </div>
+            <div class="inline-add-row">
+                <input type="text" id="custom_skill_entry" placeholder="Add another skill">
+                <button type="button" class="btn primary-btn" onclick="injectCustomSkillToForm()">Add</button>
+            </div>
+
+            <h3>Flashcards</h3>
+            <div id="flashcard-builder" class="flashcard-builder"></div>
+            <button type="button" class="btn secondary-btn" onclick="addFlashcardRow()">Add flashcard</button>
+
+            <button class="btn success-btn full-btn deploy-submit" onclick="compileAndPublishProject()">Deploy to selected cohorts</button>
         </div>
-        <div class="input-set">
-            <label for="p_team_size">Required Number of Members per Team:</label>
-            <select id="p_team_size" class="form-select">
-                <option value="2">2 Members</option>
-                <option value="3">3 Members</option>
-                <option value="4" selected>4 Members</option>
-                <option value="5">5 Members</option>
-            </select>
-        </div>
-    </div>
-
-    <div class="input-set">
-        <label for="p_deadline">Submission Grace Period Window Deadline Bounds:</label>
-        <input type="text" id="p_deadline" placeholder="e.g., June 25, 2026 at 11:59 PM">
-    </div>
-
-    <h3 style="margin-top: 2.5rem; border-top: 1px solid var(--slate-100); padding-top: 1.5rem;">
-        Bind Mandatory Technical Skill Capability Profiles
-    </h3>
-    <p class="panel-desc" style="margin-bottom: 1rem;">Toggle baseline requirements from the global dictionary master ledger below or append a completely new custom tag.</p>
-
-    <div class="checkbox-matrix">
-        {% if skills %}
-            {% for skill in skills %}
-            <label class="matrix-cb-label">
-                <input type="checkbox" class="skill-checkbox" value="{{ skill.skill_name }}">
-                {{ skill.skill_name }}
-            </label>
-            {% endfor %}
-        {% endif %}
-    </div>
-
-    <div style="background: var(--slate-100); padding: 1.25rem; border-radius: 8px; border: 1px dashed var(--slate-300); margin-bottom: 2.5rem; display: flex; gap: 1rem; align-items: flex-end;">
-        <div class="input-set" style="margin-bottom: 0; flex-grow: 1;">
-            <label for="custom_skill_entry" style="color: var(--slate-800); font-size: 0.8rem;">Append Untracked Custom Skill Vector:</label>
-            <input type="text" id="custom_skill_entry" placeholder="e.g., Cloud Server Server-Side DevOps Engineering" style="background: #ffffff;">
-        </div>
-        <button type="button" class="btn primary-btn" style="background: var(--slate-800); height: fit-content; padding: 0.85rem 1.25rem;" onclick="injectCustomSkillToForm()">
-            + Inject Skill Tag
-        </button>
-    </div>
-
-    <button class="btn success-btn full-btn" style="padding: 1.15rem; font-size: 1.05rem;" onclick="compileAndPublishProject()">
-        🚀 Finalize Framework and Deploy Campaign
-    </button>
+    </section>
 </div>
 
 <script src="{{ url_for('static', filename='js/faculty.js') }}"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    addCohortTarget();
+    addFlashcardRow();
+});
+</script>
 {% endblock %}

@@ -73,6 +73,37 @@ class Project(db.Model):
     class_batch = db.Column(db.String(50), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+class ProjectCohortAssignment(db.Model):
+    __tablename__ = 'project_cohort_assignments'
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    academic_year = db.Column(db.String(30), nullable=False)
+    department = db.Column(db.String(100), nullable=False)
+    class_name = db.Column(db.String(50), nullable=False)
+
+    __table_args__ = (db.UniqueConstraint('project_id', 'academic_year', 'department', 'class_name', name='_project_cohort_uc'),)
+
+class ProjectFlashcard(db.Model):
+    __tablename__ = 'project_flashcards'
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    topic_tag = db.Column(db.String(80), nullable=False)
+    question = db.Column(db.Text, nullable=False)
+    answer_guide = db.Column(db.Text, nullable=False)
+    max_marks = db.Column(db.Integer, nullable=False, default=10)
+
+class StudentFlashcardAnswer(db.Model):
+    __tablename__ = 'student_flashcard_answers'
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    flashcard_id = db.Column(db.Integer, db.ForeignKey('project_flashcards.id', ondelete='CASCADE'), nullable=False)
+    student_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    answer_text = db.Column(db.Text, nullable=False)
+    marks_awarded = db.Column(db.Integer, nullable=True)
+    submitted_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (db.UniqueConstraint('flashcard_id', 'student_id', name='_flashcard_answer_uc'),)
+
 class GlobalSkill(db.Model):
     __tablename__ = 'global_skills'
     id = db.Column(db.Integer, primary_key=True)
@@ -131,4 +162,15 @@ class DoubtTicket(db.Model):
     query_text = db.Column(db.Text, nullable=False)
     faculty_response = db.Column(db.Text, nullable=True)
     is_resolved = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class CommunicationMessage(db.Model):
+    __tablename__ = 'communication_messages'
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False)
+    sender_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    recipient_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=True)
+    team_number = db.Column(db.Integer, nullable=True)
+    channel_type = db.Column(db.String(20), nullable=False, default='private')
+    body = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

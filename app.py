@@ -1,12 +1,12 @@
 import os
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
-from db import db, Institution, CrossTenantAccessRequest, User, Project, GlobalSkill, ProjectSkillRequirement, StudentCompetency, Schedule, TeamAssignment, TeamProgress, DoubtTicket
+from db import db, Institution, CrossTenantAccessRequest, User, Project, ProjectCohortAssignment, ProjectFlashcard, StudentFlashcardAnswer, GlobalSkill, ProjectSkillRequirement, StudentCompetency, Schedule, TeamAssignment, TeamProgress, DoubtTicket, CommunicationMessage
 from datetime import datetime
-from sqlalchemy import inspect, or_, text
+from sqlalchemy import inspect, or_, and_, text
 
 app = Flask(__name__)
 app.secret_key = 'syncteam_academic_isolated_multi_tenant_secure_matrix_key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///syncteam.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('SYNCTEAM_DATABASE_URI', 'sqlite:///syncteam.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
@@ -188,25 +188,57 @@ def signup_page(role):
 def faculty_dashboard():
     if session.get('role') != 'faculty': return redirect(url_for('role_selection'))
     projects = Project.query.filter_by(institution_code=session['institution_code']).order_by(Project.created_at.desc()).all()
-    return render_template('faculty_dashboard.html', projects=projects)
+    students = User.query.filter_by(role='student', home_institution_code=session['institution_code']).all()
+    cohort_options = {
+        "years": sorted({s.academic_year for s in students if s.academic_year}),
+        "departments": sorted({s.stream for s in students if s.stream}),
+        "classes": sorted({s.class_name for s in students if s.class_name})
+    }
+    stats = {
+        "projects": len(projects),
+        "students": len(students),
+        "teams": TeamAssignment.query.join(Project, TeamAssignment.project_id == Project.id).filter(Project.institution_code == session['institution_code']).count(),
+        "messages": CommunicationMessage.query.join(Project, CommunicationMessage.project_id == Project.id).filter(Project.institution_code == session['institution_code']).count()
+    }
+    return render_template('faculty_dashboard.html', projects=projects, cohort_options=cohort_options, stats=stats)
 
 @app.route('/faculty/create-project')
 def faculty_create_project():
     if session.get('role') != 'faculty': return redirect(url_for('role_selection'))
     skills = GlobalSkill.query.all()
-    return render_template('faculty_create_project.html', skills=skills)
+    students = User.query.filter_by(role='student', home_institution_code=session['institution_code']).all()
+    cohort_options = {
+        "years": sorted({s.academic_year for s in students if s.academic_year}),
+        "departments": sorted({s.stream for s in students if s.stream}),
+        "classes": sorted({s.class_name for s in students if s.class_name})
+    }
+    return render_template('faculty_create_project.html', skills=skills, cohort_options=cohort_options)
 
 @app.route('/student/dashboard')
 def student_dashboard():
     if session.get('role') != 'student': return redirect(url_for('role_selection'))
-    assigned_projects = Project.query.filter_by(institution_code=session['institution_code']).order_by(Project.created_at.asc()).all()
+    student = User.query.get(session['user_id'])
+    assigned_project_ids = db.session.query(ProjectCohortAssignment.project_id).filter(
+        ProjectCohortAssignment.academic_year == student.academic_year,
+        ProjectCohortAssignment.department == student.stream,
+        ProjectCohortAssignment.class_name == student.class_name
+    ).scalar_subquery()
+    assigned_projects = Project.query.filter(
+        Project.institution_code == session['institution_code'],
+        Project.id.in_(assigned_project_ids)
+    ).order_by(Project.created_at.asc()).all()
     return render_template('student_dashboard.html', projects=assigned_projects)
 
 @app.route('/student/project/<int:project_id>')
 def student_project_view(project_id):
     if session.get('role') != 'student': return redirect(url_for('role_selection'))
     project = Project.query.get_or_404(project_id)
-    return render_template('student_project_view.html', project=project)
+    if not student_can_access_project(session['user_id'], project_id):
+        return redirect(url_for('student_dashboard'))
+    flashcards = ProjectFlashcard.query.filter_by(project_id=project_id).order_by(ProjectFlashcard.id.asc()).all()
+    answers = StudentFlashcardAnswer.query.filter_by(project_id=project_id, student_id=session['user_id']).all()
+    answer_map = {a.flashcard_id: a for a in answers}
+    return render_template('student_project_view.html', project=project, flashcards=flashcards, answer_map=answer_map)
 
 @app.route('/admin/dashboard')
 def admin_dashboard():
@@ -390,6 +422,53 @@ def apply_section_filter(query, section):
         return query.filter(or_(User.batch == "02", User.batch == "2", User.class_name.ilike("%2")))
     return query
 
+def student_can_access_project(student_id, project_id):
+    student = User.query.get(student_id)
+    if not student:
+        return False
+    return ProjectCohortAssignment.query.filter_by(
+        project_id=project_id,
+        academic_year=student.academic_year,
+        department=student.stream,
+        class_name=student.class_name
+    ).first() is not None
+
+def assigned_student_query(project_id):
+    assignment_rows = ProjectCohortAssignment.query.filter_by(project_id=project_id).all()
+    query = User.query.filter_by(role='student', home_institution_code=session['institution_code'])
+    if not assignment_rows:
+        return query.filter(False)
+
+    cohort_filters = []
+    for row in assignment_rows:
+        cohort_filters.append(and_(
+            User.academic_year == row.academic_year,
+            User.stream == row.department,
+            User.class_name == row.class_name
+        ))
+    return query.filter(or_(*cohort_filters))
+
+def project_quiz_total(project_id, student_id):
+    answers = StudentFlashcardAnswer.query.filter_by(project_id=project_id, student_id=student_id).all()
+    return sum(a.marks_awarded or 0 for a in answers)
+
+def project_quiz_complete(project_id, student_id):
+    flashcard_count = ProjectFlashcard.query.filter_by(project_id=project_id).count()
+    if flashcard_count == 0:
+        return True
+    answer_count = StudentFlashcardAnswer.query.filter_by(project_id=project_id, student_id=student_id).count()
+    return answer_count >= flashcard_count
+
+def team_generation_unlocked(project):
+    try:
+        deadline_dt = datetime.strptime(project.deadline, "%Y-%m-%d")
+        if datetime.utcnow() >= deadline_dt:
+            return True
+    except ValueError:
+        pass
+    students = assigned_student_query(project.id).all()
+    return bool(students) and all(project_quiz_complete(project.id, student.id) for student in students)
+
 @app.route('/api/reports/discover-students', methods=['GET'])
 def discover_students():
     if session.get('role') not in ['admin', 'faculty']: return jsonify({"error": "Unauthorized"}), 403
@@ -458,18 +537,35 @@ def teacher_directory():
 def api_deploy_project():
     if session.get('role') != 'faculty': return jsonify({"error": "Forbidden"}), 403
     data = request.json
+    cohorts = data.get('cohorts') or []
+    if not cohorts:
+        return jsonify({"success": False, "message": "Select at least one academic year, department, and class."})
+
+    cohort_label = "; ".join([f"{c.get('academic_year')} / {c.get('department')} / {c.get('class_name')}" for c in cohorts])
     new_p = Project(
         institution_code=session['institution_code'],
         project_name=data['name'],
         description=data['description'],
         deadline=data['deadline'],
         team_size=int(data['team_size']),
-        class_batch=data['batch']
+        class_batch=cohort_label[:50] if cohort_label else data.get('batch', 'Multi-cohort')
     )
     db.session.add(new_p)
     db.session.commit()
+
+    for cohort in cohorts:
+        academic_year = cohort.get('academic_year')
+        department = cohort.get('department')
+        class_name = cohort.get('class_name')
+        if academic_year and department and class_name:
+            db.session.add(ProjectCohortAssignment(
+                project_id=new_p.id,
+                academic_year=academic_year,
+                department=department,
+                class_name=class_name
+            ))
     
-    for s_name in data['skills']:
+    for s_name in data.get('skills', []):
         s_name_clean = s_name.strip()
         if not s_name_clean: continue
         skill_node = GlobalSkill.query.filter_by(skill_name=s_name_clean).first()
@@ -478,7 +574,19 @@ def api_deploy_project():
             db.session.add(skill_node)
             db.session.commit()
         db.session.add(ProjectSkillRequirement(project_id=new_p.id, skill_id=skill_node.id))
-        
+
+    for card in data.get('flashcards', []):
+        question = (card.get('question') or '').strip()
+        answer_guide = (card.get('answer_guide') or '').strip()
+        if question and answer_guide:
+            db.session.add(ProjectFlashcard(
+                project_id=new_p.id,
+                topic_tag=(card.get('topic_tag') or 'General').strip(),
+                question=question,
+                answer_guide=answer_guide,
+                max_marks=max(1, int(card.get('max_marks') or 10))
+            ))
+
     db.session.commit()
     return jsonify({"success": True, "message": "Framework deployed to active tenant pool!"})
 
@@ -511,6 +619,76 @@ def api_submit_assessment():
     
     db.session.commit()
     return jsonify({"success": True, "message": "Form metrics locked inside tenant records!"})
+
+@app.route('/api/student/submit-flashcards', methods=['POST'])
+def api_submit_flashcards():
+    if session.get('role') != 'student': return jsonify({"error": "Forbidden"}), 403
+    data = request.json
+    project_id = int(data.get('project_id'))
+    if not student_can_access_project(session['user_id'], project_id):
+        return jsonify({"success": False, "message": "This project is not assigned to your class."}), 403
+
+    for flashcard_id, answer_text in (data.get('answers') or {}).items():
+        flashcard = ProjectFlashcard.query.filter_by(id=int(flashcard_id), project_id=project_id).first()
+        if not flashcard:
+            continue
+        answer = StudentFlashcardAnswer.query.filter_by(
+            flashcard_id=flashcard.id,
+            student_id=session['user_id']
+        ).first()
+        if answer:
+            answer.answer_text = answer_text.strip()
+        else:
+            db.session.add(StudentFlashcardAnswer(
+                project_id=project_id,
+                flashcard_id=flashcard.id,
+                student_id=session['user_id'],
+                answer_text=answer_text.strip()
+            ))
+    db.session.commit()
+    return jsonify({"success": True, "message": "Quiz answers saved."})
+
+@app.route('/api/faculty/project/<int:project_id>/status-matrix')
+def faculty_status_matrix(project_id):
+    if session.get('role') != 'faculty': return jsonify({"error": "Forbidden"}), 403
+    Project.query.filter_by(id=project_id, institution_code=session['institution_code']).first_or_404()
+    flashcards = ProjectFlashcard.query.filter_by(project_id=project_id).order_by(ProjectFlashcard.id.asc()).all()
+    students = assigned_student_query(project_id).order_by(User.real_name.asc()).all()
+    payload = []
+    for student in students:
+        answers = StudentFlashcardAnswer.query.filter_by(project_id=project_id, student_id=student.id).all()
+        answer_lookup = {a.flashcard_id: a for a in answers}
+        payload.append({
+            "id": student.id,
+            "name": student.real_name,
+            "college_id": student.student_roll_no,
+            "account_status": "Claimed" if student.account_claimed else "Unclaimed",
+            "quiz_status": "Complete" if len(answers) >= len(flashcards) else "Pending",
+            "marks": sum(a.marks_awarded or 0 for a in answers),
+            "answers": [{
+                "flashcard_id": card.id,
+                "topic": card.topic_tag,
+                "question": card.question,
+                "answer": answer_lookup[card.id].answer_text if card.id in answer_lookup else "",
+                "marks_awarded": answer_lookup[card.id].marks_awarded if card.id in answer_lookup else None,
+                "max_marks": card.max_marks
+            } for card in flashcards]
+        })
+    return jsonify(payload)
+
+@app.route('/api/faculty/project/<int:project_id>/grade-answer', methods=['POST'])
+def grade_flashcard_answer(project_id):
+    if session.get('role') != 'faculty': return jsonify({"error": "Forbidden"}), 403
+    data = request.json
+    answer = StudentFlashcardAnswer.query.filter_by(
+        project_id=project_id,
+        student_id=int(data.get('student_id')),
+        flashcard_id=int(data.get('flashcard_id'))
+    ).first_or_404()
+    card = ProjectFlashcard.query.get_or_404(answer.flashcard_id)
+    answer.marks_awarded = max(0, min(card.max_marks, int(data.get('marks') or 0)))
+    db.session.commit()
+    return jsonify({"success": True, "message": "Marks saved."})
 
 # ==========================================
 # TEAM MANAGEMENT & ALGORITHM CLUSTERS
@@ -559,33 +737,45 @@ def update_progress():
 def compliance_report(project_id):
     if session.get('role') != 'faculty': return jsonify({"error": "Forbidden"}), 403
     participated_subquery = db.session.query(StudentCompetency.user_id).filter(StudentCompetency.project_id == project_id).subquery()
-    outstanding_students = User.query.filter_by(role='student', home_institution_code=session['institution_code']).filter(~User.id.in_(participated_subquery)).all()
+    outstanding_students = assigned_student_query(project_id).filter(~User.id.in_(participated_subquery)).all()
     return jsonify([{"id": s.id, "name": s.real_name, "roll_no": s.student_roll_no, "class": s.class_name, "batch": s.batch} for s in outstanding_students])
 
 @app.route('/api/project/<int:project_id>/generate-teams', methods=['POST'])
 def generate_teams(project_id):
     if session.get('role') != 'faculty': return jsonify({"error": "Forbidden"}), 403
     project = Project.query.get_or_404(project_id)
+    if not team_generation_unlocked(project):
+        return jsonify({"success": False, "message": "Team generation unlocks after the deadline passes or every assigned student completes the quiz."})
     target_size = project.team_size
     
     competent_roster = db.session.query(User.id, db.func.sum(StudentCompetency.score).label('total_weight')).join(
         StudentCompetency, User.id == StudentCompetency.user_id
-    ).filter(StudentCompetency.project_id == project_id).group_by(User.id).order_by(db.desc('total_weight')).all()
+    ).filter(
+        StudentCompetency.project_id == project_id,
+        User.id.in_(assigned_student_query(project_id).with_entities(User.id))
+    ).group_by(User.id).all()
+    weighted_roster = []
+    for student_id, skill_weight in competent_roster:
+        weighted_roster.append({
+            "id": student_id,
+            "weight": int(skill_weight or 0) + project_quiz_total(project_id, student_id)
+        })
+    weighted_roster.sort(key=lambda row: row["weight"], reverse=True)
     
-    if not competent_roster:
+    if not weighted_roster:
         return jsonify({"success": False, "message": "Matchmaking halted: No student metrics recorded yet."})
         
     TeamAssignment.query.filter_by(project_id=project_id).delete()
-    total_count = len(competent_roster)
+    total_count = len(weighted_roster)
     num_teams = max(1, total_count // target_size)
     teams_accumulator = [[] for _ in range(num_teams)]
     
-    for rank_idx, student in enumerate(competent_roster):
+    for rank_idx, student in enumerate(weighted_roster):
         wave_cycle = rank_idx // num_teams
         target_bucket = rank_idx % num_teams
         if wave_cycle % 2 != 0:
             target_bucket = (num_teams - 1) - target_bucket
-        teams_accumulator[target_bucket].append(student.id)
+        teams_accumulator[target_bucket].append(student["id"])
         
     for team_idx, members in enumerate(teams_accumulator):
         t_num = team_idx + 1
@@ -597,17 +787,113 @@ def generate_teams(project_id):
 
 @app.route('/api/project/<int:project_id>/roster-report')
 def get_roster_report(project_id):
-    records = db.session.query(TeamAssignment.team_number, User.real_name, User.username, TeamAssignment.is_team_lead).join(
+    records = db.session.query(TeamAssignment.team_number, User.id, User.real_name, User.username, User.student_roll_no, TeamAssignment.is_team_lead).join(
         User, TeamAssignment.student_id == User.id
     ).filter(TeamAssignment.project_id == project_id).order_by(TeamAssignment.team_number.asc()).all()
     
     report_dictionary = {}
-    for t_num, r_name, u_name, is_lead in records:
+    for t_num, student_id, r_name, u_name, roll_no, is_lead in records:
         if t_num not in report_dictionary: report_dictionary[t_num] = []
-        # Explicit append adding custom leading check icons if student holds an active lead token row property
-        display_name = f"👑 {r_name} (Team Lead)" if is_lead else r_name
-        report_dictionary[t_num].append({"name": display_name, "username": u_name})
+        report_dictionary[t_num].append({"id": student_id, "name": r_name, "username": u_name, "roll_no": roll_no, "is_lead": is_lead})
     return jsonify(report_dictionary)
+
+@app.route('/api/project/<int:project_id>/eligible-students')
+def eligible_students(project_id):
+    if session.get('role') != 'faculty': return jsonify({"error": "Forbidden"}), 403
+    assigned_ids = db.session.query(TeamAssignment.student_id).filter_by(project_id=project_id).subquery()
+    students = assigned_student_query(project_id).filter(~User.id.in_(assigned_ids)).order_by(User.real_name.asc()).all()
+    return jsonify([{"id": s.id, "name": s.real_name, "college_id": s.student_roll_no, "class": s.class_name} for s in students])
+
+@app.route('/api/faculty/project/<int:project_id>/team-edit', methods=['POST'])
+def edit_team(project_id):
+    if session.get('role') != 'faculty': return jsonify({"error": "Forbidden"}), 403
+    data = request.json
+    action = data.get('action')
+    student_id = int(data.get('student_id'))
+
+    if action == 'remove':
+        TeamAssignment.query.filter_by(project_id=project_id, student_id=student_id).delete()
+    elif action in ['move', 'add']:
+        team_number = int(data.get('team_number'))
+        row = TeamAssignment.query.filter_by(project_id=project_id, student_id=student_id).first()
+        if row:
+            row.team_number = team_number
+        elif student_can_access_project(student_id, project_id):
+            db.session.add(TeamAssignment(project_id=project_id, student_id=student_id, team_number=team_number))
+        else:
+            return jsonify({"success": False, "message": "Student is outside this project's assigned cohorts."})
+    elif action == 'leader':
+        team_number = int(data.get('team_number'))
+        TeamAssignment.query.filter_by(project_id=project_id, team_number=team_number).update({"is_team_lead": False})
+        row = TeamAssignment.query.filter_by(project_id=project_id, student_id=student_id, team_number=team_number).first()
+        if row:
+            row.is_team_lead = True
+    else:
+        return jsonify({"success": False, "message": "Unsupported team edit."})
+
+    db.session.commit()
+    return jsonify({"success": True, "message": "Team updated."})
+
+@app.route('/api/project/<int:project_id>/messages')
+def project_messages(project_id):
+    if session.get('role') not in ['faculty', 'student']: return jsonify({"error": "Forbidden"}), 403
+    channel_type = request.args.get('channel_type', 'private')
+    query = CommunicationMessage.query.filter_by(project_id=project_id, channel_type=channel_type)
+    if session.get('role') == 'student':
+        if not student_can_access_project(session['user_id'], project_id):
+            return jsonify({"error": "Forbidden"}), 403
+        if channel_type == 'private':
+            query = query.filter(or_(CommunicationMessage.sender_id == session['user_id'], CommunicationMessage.recipient_id == session['user_id']))
+        else:
+            assignment = TeamAssignment.query.filter_by(project_id=project_id, student_id=session['user_id']).first()
+            query = query.filter_by(team_number=assignment.team_number if assignment else 0)
+    elif request.args.get('team_number'):
+        query = query.filter_by(team_number=int(request.args.get('team_number')))
+
+    messages = query.order_by(CommunicationMessage.created_at.asc()).all()
+    sender_ids = {m.sender_id for m in messages}
+    users = {u.id: u for u in User.query.filter(User.id.in_(sender_ids)).all()} if sender_ids else {}
+    return jsonify([{
+        "id": m.id,
+        "sender": users[m.sender_id].real_name if m.sender_id in users else "Unknown",
+        "sender_role": users[m.sender_id].role if m.sender_id in users else "",
+        "body": m.body,
+        "channel_type": m.channel_type,
+        "team_number": m.team_number,
+        "created_at": m.created_at.strftime("%Y-%m-%d %H:%M")
+    } for m in messages])
+
+@app.route('/api/project/<int:project_id>/messages', methods=['POST'])
+def send_project_message(project_id):
+    if session.get('role') not in ['faculty', 'student']: return jsonify({"error": "Forbidden"}), 403
+    data = request.json
+    channel_type = data.get('channel_type', 'private')
+    body = (data.get('body') or '').strip()
+    if not body:
+        return jsonify({"success": False, "message": "Message cannot be empty."})
+
+    recipient_id = data.get('recipient_id')
+    team_number = data.get('team_number')
+    if session.get('role') == 'student':
+        if not student_can_access_project(session['user_id'], project_id):
+            return jsonify({"error": "Forbidden"}), 403
+        if channel_type == 'team':
+            assignment = TeamAssignment.query.filter_by(project_id=project_id, student_id=session['user_id']).first()
+            team_number = assignment.team_number if assignment else None
+            recipient_id = None
+        else:
+            recipient_id = None
+
+    db.session.add(CommunicationMessage(
+        project_id=project_id,
+        sender_id=session['user_id'],
+        recipient_id=int(recipient_id) if recipient_id else None,
+        team_number=int(team_number) if team_number else None,
+        channel_type=channel_type,
+        body=body
+    ))
+    db.session.commit()
+    return jsonify({"success": True, "message": "Message sent."})
 
 
 # ==========================================
