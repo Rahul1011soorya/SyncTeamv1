@@ -9,14 +9,14 @@ The long-term goal of the project is to implement an intelligent team formation 
 
 ## Pages
 
--Role Selection Page
--Login Page
--Signup Page
--Student Dashboard
--Student Project View Page
--Faculty Dashboard
--Create Project Page
--Admin Dashboard
+- Role Selection Page
+- Login Page
+- Signup Page
+- Student Dashboard
+- Student Project View Page
+- Faculty Dashboard
+- Create Project Page
+- Admin Dashboard
 
 ## Project Structure
 
