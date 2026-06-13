@@ -47,3 +47,18 @@ SYNCTEAM
     ├── student_project_view.html
     └── admin_dashboard.html
 ```
+## What we did
+
+
+**A D Anand Soorya**:
+
+* Developed the faculty dashboard features, custom interface views, overall page layout templates, and interactive project deployment workflows.
+
+* Understood how to translate instructor tracking requirements—such as compliance metrics and balanced team generation blocks—into structured visual dashboards.
+
+  
+**Kiran Prasannan**:
+
+* Developed the admin dashboard features, system setting interfaces, batch-filtering search matrices, and implemented the core multi-tenant backend database architecture.
+  
+* Understood the structural layout of relational database models and how to implement strict table isolation boundaries to keep separate college data sandboxes secure.
