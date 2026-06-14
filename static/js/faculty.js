@@ -1,5 +1,10 @@
 const selectedCohorts = [];
 
+function notifySync(message, type = "success", afterClose = null) {
+    if (window.showSyncToast) showSyncToast(message, type, afterClose);
+    else alert(message);
+}
+
 function fieldValue(id) {
     const field = document.getElementById(id);
     return field ? field.value.trim() : "";
@@ -51,6 +56,223 @@ function discoverStudentsByAttributes() {
                 </tr>
             `;
         });
+    });
+}
+
+function approveFacultyAccess(userId) {
+    fetch(`/api/admin/approve-faculty/${userId}`, { method: 'POST' })
+    .then(res => res.json())
+    .then(data => {
+        notifySync(data.message || data.error || "Faculty approval request completed.", data.success ? "success" : "error");
+        if (!data.success) return;
+
+        const row = document.getElementById(`pending-faculty-${userId}`);
+        if (row) row.remove();
+
+        const pendingRows = document.getElementById('pending-faculty-rows');
+        if (pendingRows && pendingRows.children.length === 0) {
+            pendingRows.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--slate-600);">No faculty accounts are waiting for approval.</td></tr>`;
+        }
+
+        if (document.getElementById('teacher-directory-rows')) {
+            filterTeacherDirectory();
+        }
+    })
+    .catch(() => notifySync("Unable to approve faculty access. Please try again.", "error"));
+}
+
+function createAdminManagedUser() {
+    const role = fieldValue('admin_new_role');
+    const payload = {
+        role,
+        real_name: fieldValue('admin_new_name'),
+        username: fieldValue('admin_new_username'),
+        password: fieldValue('admin_new_password'),
+        stream: fieldValue('admin_new_stream'),
+        class_name: fieldValue('admin_new_class'),
+        batch: fieldValue('admin_new_batch'),
+        semester: fieldValue('admin_new_semester'),
+        academic_year: fieldValue('admin_new_year'),
+        age: fieldValue('admin_new_age'),
+        enrollment_year: fieldValue('admin_new_enrollment_year'),
+        student_roll_no: fieldValue('admin_new_roll_no'),
+        faculty_id: fieldValue('admin_new_faculty_id'),
+        subject_specialization: fieldValue('admin_new_subject')
+    };
+
+    fetch('/api/admin/create-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => {
+        notifySync(data.message || data.error || "User creation completed.", data.success ? "success" : "error");
+        if (data.success) {
+            document.querySelectorAll('.admin-new-user-field').forEach(field => field.value = "");
+            if (document.getElementById('teacher-directory-rows')) filterTeacherDirectory();
+        }
+    })
+    .catch(() => notifySync("Unable to create user. Please try again.", "error"));
+}
+
+function filterTeacherDirectory() {
+    const queryParams = new URLSearchParams({
+        department: fieldValue('teacher_filter_department')
+    });
+
+    fetch(`/api/admin/teacher-directory?${queryParams.toString()}`)
+    .then(res => res.json())
+    .then(faculty => {
+        const tableBody = document.getElementById('teacher-directory-rows');
+        if (!tableBody) return;
+        tableBody.innerHTML = "";
+
+        if (faculty.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--slate-600);">No teachers matched this filter.</td></tr>`;
+            return;
+        }
+
+        faculty.forEach(f => {
+            tableBody.innerHTML += `
+                <tr>
+                    <td><strong>${escapeHtml(f.name)}</strong></td>
+                    <td><code>${escapeHtml(f.faculty_id || '-')}</code></td>
+                    <td>${escapeHtml(f.department || '-')}</td>
+                    <td>${escapeHtml(f.subject || '-')}</td>
+                    <td>${escapeHtml(f.status)}</td>
+                </tr>
+            `;
+        });
+    });
+}
+
+function drawCompletionBarChart(canvasId, legendId, rows, emptyMessage) {
+    const canvas = document.getElementById(canvasId);
+    const legend = document.getElementById(legendId);
+    if (!canvas || !legend) return;
+
+    if (!Array.isArray(rows) || rows.length === 0) {
+        const context = canvas.getContext('2d');
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        legend.innerHTML = `<p class="muted-text">${escapeHtml(emptyMessage)}</p>`;
+        return;
+    }
+
+    const ratio = window.devicePixelRatio || 1;
+    const displayWidth = Math.max(320, canvas.parentElement.clientWidth);
+    const displayHeight = Number(canvas.getAttribute('height')) || 240;
+    canvas.width = displayWidth * ratio;
+    canvas.height = displayHeight * ratio;
+    canvas.style.width = `${displayWidth}px`;
+    canvas.style.height = `${displayHeight}px`;
+
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    ctx.clearRect(0, 0, displayWidth, displayHeight);
+
+    const palette = ['#2563eb', '#059669', '#dc2626', '#d97706', '#7c3aed', '#0891b2', '#be123c', '#4f46e5'];
+    const padding = { top: 22, right: 24, bottom: 54, left: 46 };
+    const chartWidth = displayWidth - padding.left - padding.right;
+    const chartHeight = displayHeight - padding.top - padding.bottom;
+    const barGap = 12;
+    const barWidth = Math.max(20, (chartWidth - (rows.length - 1) * barGap) / rows.length);
+
+    ctx.strokeStyle = '#dbe4ef';
+    ctx.lineWidth = 1;
+    ctx.font = '12px Arial';
+    ctx.fillStyle = '#64748b';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+
+    [0, 25, 50, 75, 100].forEach(tick => {
+        const y = padding.top + chartHeight - (tick / 100) * chartHeight;
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(displayWidth - padding.right, y);
+        ctx.stroke();
+        ctx.fillText(`${tick}%`, padding.left - 8, y);
+    });
+
+    rows.forEach((row, index) => {
+        const completion = Math.max(0, Math.min(100, Number(row.completion) || 0));
+        const barHeight = (completion / 100) * chartHeight;
+        const x = padding.left + index * (barWidth + barGap);
+        const y = padding.top + chartHeight - barHeight;
+        const color = palette[index % palette.length];
+
+        ctx.fillStyle = color;
+        ctx.fillRect(x, y, barWidth, barHeight);
+
+        ctx.fillStyle = '#0f172a';
+        ctx.font = '700 12px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(`${completion}%`, x + barWidth / 2, Math.max(y - 6, 16));
+
+        ctx.save();
+        ctx.translate(x + barWidth / 2, padding.top + chartHeight + 8);
+        ctx.rotate(-0.45);
+        ctx.fillStyle = '#475569';
+        ctx.font = '11px Arial';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(row.label).slice(0, 18), 0, 0);
+        ctx.restore();
+    });
+
+    legend.innerHTML = rows.map((row, index) => `
+        <span class="chart-legend-item">
+            <i style="background:${palette[index % palette.length]}"></i>
+            ${escapeHtml(row.label)} - ${Math.max(0, Math.min(100, Number(row.completion) || 0))}%
+            ${row.meta ? `<small>${escapeHtml(row.meta)}</small>` : ""}
+        </span>
+    `).join("");
+}
+
+function loadFacultyProjectCompletionGraph() {
+    const chart = document.getElementById('faculty-project-completion-chart');
+    if (!chart) return;
+
+    fetch('/api/faculty/project-completion-summary')
+    .then(res => res.json())
+    .then(projects => {
+        drawCompletionBarChart(
+            'faculty-project-completion-canvas',
+            'faculty-project-completion-legend',
+            Array.isArray(projects) ? projects.map(project => ({
+                label: project.name,
+                completion: project.completion,
+                meta: `${project.assigned_students} assigned students | ${project.teams} teams`
+            })) : [],
+            'No projects available for completion tracking.'
+        );
+    })
+    .catch(() => {
+        chart.innerHTML = `<p class="muted-text">Unable to load project completion graph.</p>`;
+    });
+}
+
+function loadTeamCompletionGraph(projectId) {
+    const chart = document.getElementById(`team-completion-chart-${projectId}`);
+    if (!chart) return;
+
+    fetch(`/api/faculty/project/${projectId}/team-completion`)
+    .then(res => res.json())
+    .then(teams => {
+        drawCompletionBarChart(
+            `team-completion-canvas-${projectId}`,
+            `team-completion-legend-${projectId}`,
+            Array.isArray(teams) ? teams.map(team => ({
+                label: `Team ${team.team_number}`,
+                completion: team.completion,
+                meta: `${team.members} members | ${team.summary}`
+            })) : [],
+            'Generate teams to see team-wise completion.'
+        );
+    })
+    .catch(() => {
+        chart.innerHTML = `<p class="muted-text">Unable to load team completion graph.</p>`;
     });
 }
 
@@ -115,7 +337,7 @@ function compileAndPublishProject() {
     })).filter(card => card.question && card.answer_guide);
 
     if (!fieldValue('p_name') || !fieldValue('p_desc') || !fieldValue('p_deadline') || selectedCohorts.length === 0) {
-        alert("Fill the project title, brief, deadline, and at least one cohort.");
+        notifySync("Fill the project title, brief, deadline, and at least one cohort.", "error");
         return;
     }
 
@@ -135,8 +357,9 @@ function compileAndPublishProject() {
     })
     .then(res => res.json())
     .then(data => {
-        alert(data.message);
-        if (data.success) window.location.href = '/faculty/dashboard';
+        notifySync(data.message, data.success ? "success" : "error", data.success ? () => {
+            window.location.href = '/faculty/dashboard';
+        } : null);
     });
 }
 
@@ -158,8 +381,12 @@ function runTeamMatchmakingOptimization(projectId) {
     fetch(`/api/project/${projectId}/generate-teams`, { method: 'POST' })
     .then(res => res.json())
     .then(data => {
-        alert(data.message);
-        if (data.success) loadRosterPrintData(projectId);
+        notifySync(data.message, data.success ? "success" : "error");
+        if (data.success) {
+            loadRosterPrintData(projectId);
+            loadTeamCompletionGraph(projectId);
+            loadFacultyProjectCompletionGraph();
+        }
     });
 }
 
@@ -177,6 +404,9 @@ function loadRosterPrintData(projectId) {
             output.innerHTML = `<p class="muted-text">No team allocation exists yet.</p>`;
         }
 
+        const teamNumbers = Object.keys(teams);
+        const teamOptions = teamNumbers.map(num => `<option value="${num}">Team ${num}</option>`).join("");
+
         Object.entries(teams).forEach(([teamNum, members]) => {
             const options = Object.keys(teams).map(num => `<option value="${num}">Team ${num}</option>`).join("");
             output.innerHTML += `
@@ -184,9 +414,12 @@ function loadRosterPrintData(projectId) {
                     <div class="team-card-head"><h4>Team ${teamNum}</h4><span>${members.length} members</span></div>
                     ${members.map(member => `
                         <div class="team-member-row">
-                            <div><strong>${member.is_lead ? "Crown " : ""}${escapeHtml(member.name)}</strong><small>${escapeHtml(member.roll_no || member.username)}</small></div>
+                            <div>
+                                <strong>${escapeHtml(member.name)} ${member.is_lead ? '<span class="lead-badge">Team Lead</span>' : ''}</strong>
+                                <small>${escapeHtml(member.roll_no || member.username)}</small>
+                            </div>
                             <div class="team-actions">
-                                <button class="icon-action" title="Make leader" onclick="editTeam('${projectId}', 'leader', '${member.id}', '${teamNum}')">Crown</button>
+                                <button class="icon-action" title="Make this student team lead" onclick="editTeam('${projectId}', 'leader', '${member.id}', '${teamNum}')">Make Lead</button>
                                 <select onchange="editTeam('${projectId}', 'move', '${member.id}', this.value)">${options}</select>
                                 <button class="icon-action danger" title="Remove" onclick="editTeam('${projectId}', 'remove', '${member.id}', '${teamNum}')">Remove</button>
                             </div>
@@ -196,9 +429,18 @@ function loadRosterPrintData(projectId) {
             `;
         });
 
-        eligibleStrip.innerHTML = eligible.length ? `<h4>Add unassigned students</h4>` + eligible.map(student => `
-            <button class="chip-btn" onclick="editTeam('${projectId}', 'add', '${student.id}', '1')">${escapeHtml(student.name)} (${escapeHtml(student.college_id)})</button>
-        `).join("") : "";
+        eligibleStrip.innerHTML = eligible.length ? `
+            <h4>Unassigned students</h4>
+            ${eligible.map(student => `
+                <div class="unassigned-student-row">
+                    <div><strong>${escapeHtml(student.name)}</strong><small>${escapeHtml(student.college_id)} | ${escapeHtml(student.class)}</small></div>
+                    <div class="team-actions">
+                        <select id="reassign-team-${projectId}-${student.id}">${teamOptions || '<option value="1">Team 1</option>'}</select>
+                        <button class="icon-action" onclick="editTeam('${projectId}', 'add', '${student.id}', fieldValue('reassign-team-${projectId}-${student.id}'))">Assign</button>
+                    </div>
+                </div>
+            `).join("")}
+        ` : `<p class="muted-text">No unassigned students for this project.</p>`;
     });
 }
 
@@ -210,8 +452,10 @@ function editTeam(projectId, action, studentId, teamNumber) {
     })
     .then(res => res.json())
     .then(data => {
-        if (!data.success) alert(data.message);
+        if (!data.success) notifySync(data.message, "error");
         loadRosterPrintData(projectId);
+        loadTeamCompletionGraph(projectId);
+        loadFacultyProjectCompletionGraph();
     });
 }
 
@@ -254,30 +498,68 @@ function gradeAnswer(projectId, studentId, flashcardId, marks) {
 function loadProjectMessages(projectId) {
     const panel = document.getElementById(`messages-panel-${projectId}`);
     if (!panel) return;
-    fetch(`/api/project/${projectId}/messages?channel_type=private`)
+    fetch(`/api/project/${projectId}/messages?channel_type=team`)
     .then(res => res.json())
     .then(messages => {
-        panel.innerHTML = `
-            <div class="message-composer">
-                <h4>Private doubts</h4>
-                <div class="message-list">${messages.map(m => `<p><strong>${escapeHtml(m.sender)}</strong> <small>${escapeHtml(m.created_at)}</small><br>${escapeHtml(m.body)}</p>`).join("") || "No messages yet."}</div>
-                <textarea id="message-body-${projectId}" rows="2" placeholder="Reply or post a project note"></textarea>
-                <button class="btn primary-btn" onclick="sendProjectMessage('${projectId}')">Send</button>
+        if (!Array.isArray(messages) || messages.length === 0) {
+            panel.innerHTML = `<p class="muted-text">No team lead doubts have been posted yet.</p>`;
+            return;
+        }
+        const grouped = messages.reduce((acc, message) => {
+            const team = message.team_number || "Unassigned";
+            if (!acc[team]) acc[team] = [];
+            acc[team].push(message);
+            return acc;
+        }, {});
+        panel.innerHTML = Object.entries(grouped).map(([teamNum, teamMessages]) => `
+            <div class="message-composer team-message-thread">
+                <h4>Team ${escapeHtml(teamNum)}</h4>
+                <div class="message-list">${teamMessages.map(m => `<p><strong>${escapeHtml(m.sender)}</strong> <small>${escapeHtml(m.created_at)}</small><br>${escapeHtml(m.body)}</p>`).join("")}</div>
+                <textarea id="message-body-${projectId}-${teamNum}" rows="2" placeholder="Reply to Team ${escapeHtml(teamNum)}"></textarea>
+                <button class="btn primary-btn" onclick="sendProjectMessage('${projectId}', '${teamNum}')">Reply</button>
             </div>
-        `;
+        `).join("");
     });
 }
 
-function sendProjectMessage(projectId) {
+function sendProjectMessage(projectId, teamNumber) {
     fetch(`/api/project/${projectId}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ channel_type: 'private', body: fieldValue(`message-body-${projectId}`) })
+        body: JSON.stringify({
+            channel_type: 'team',
+            team_number: teamNumber,
+            body: fieldValue(`message-body-${projectId}-${teamNumber}`)
+        })
     })
     .then(res => res.json())
-    .then(() => loadProjectMessages(projectId));
+    .then(data => {
+        if (!data.success) notifySync(data.message || data.error || "Message could not be sent.", "error");
+        loadProjectMessages(projectId);
+    });
+}
+
+function clearProjectMessages(projectId, teamNumber = "") {
+    const params = new URLSearchParams({ channel_type: 'team' });
+    if (teamNumber) params.set('team_number', teamNumber);
+
+    fetch(`/api/project/${projectId}/messages?${params.toString()}`, { method: 'DELETE' })
+    .then(res => res.json())
+    .then(data => {
+        notifySync(data.message || data.error || "Messages cleared.", data.success ? "success" : "error");
+        loadProjectMessages(projectId);
+    })
+    .catch(() => notifySync("Unable to clear messages. Please try again.", "error"));
 }
 
 function triggerSystemPrintOperation() {
     window.print();
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.caps-only').forEach(field => {
+        field.addEventListener('input', () => {
+            field.value = field.value.toUpperCase();
+        });
+    });
+});

@@ -16,6 +16,9 @@
             </div>
             
             <div class="public-nav-links" style="display: flex; gap: 1.5rem;">
+                <a href="/portal/admin?inst_code=MBCET" class="header-nav-item">Admin</a>
+                <a href="/portal/faculty?inst_code=MBCET" class="header-nav-item">Faculty</a>
+                <a href="/portal/student?inst_code=MBCET" class="header-nav-item">Student</a>
                 <a href="#about" class="header-nav-item">About Us</a>
                 <a href="#contact" class="header-nav-item">Contact</a>
             </div>
@@ -48,6 +51,51 @@
             </div>
         </div>
     </footer>
+
+    <div class="sync-modal-backdrop" id="sync-modal-backdrop" aria-hidden="true">
+        <div class="sync-modal" role="dialog" aria-modal="true" aria-labelledby="sync-modal-title">
+            <div class="sync-tick" id="sync-modal-icon">
+                <svg viewBox="0 0 52 52" aria-hidden="true">
+                    <circle cx="26" cy="26" r="24"></circle>
+                    <path d="M15 27.5 22.5 35 38 18"></path>
+                </svg>
+            </div>
+            <h3 id="sync-modal-title">Done</h3>
+            <p id="sync-modal-message"></p>
+            <button class="btn primary-btn" type="button" onclick="closeSyncToast()">OK</button>
+        </div>
+    </div>
+
+    <script>
+    let syncToastAfterClose = null;
+
+    function showSyncToast(message, type = "success", afterClose = null) {
+        const backdrop = document.getElementById("sync-modal-backdrop");
+        const title = document.getElementById("sync-modal-title");
+        const body = document.getElementById("sync-modal-message");
+        const icon = document.getElementById("sync-modal-icon");
+        if (!backdrop || !title || !body || !icon) {
+            window.alert(message);
+            return;
+        }
+        title.textContent = type === "error" ? "Action needed" : "Done";
+        body.textContent = message || "";
+        icon.classList.toggle("error", type === "error");
+        syncToastAfterClose = typeof afterClose === "function" ? afterClose : null;
+        backdrop.classList.add("show");
+        backdrop.setAttribute("aria-hidden", "false");
+    }
+
+    function closeSyncToast() {
+        const backdrop = document.getElementById("sync-modal-backdrop");
+        if (!backdrop) return;
+        backdrop.classList.remove("show");
+        backdrop.setAttribute("aria-hidden", "true");
+        const callback = syncToastAfterClose;
+        syncToastAfterClose = null;
+        if (callback) callback();
+    }
+    </script>
 
 </body>
 </html>

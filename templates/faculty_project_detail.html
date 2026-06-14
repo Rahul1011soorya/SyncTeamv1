@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem;">
+    <a href="/faculty/dashboard" style="color: var(--indigo-600); text-decoration: none; font-weight: 700;">Back to faculty dashboard</a>
+</div>
+
+<section class="project-detail-shell">
+    <div class="panel project-detail-hero">
+        <div>
+            <span class="eyebrow">Project Detail</span>
+            <h2>{{ project.project_name }}</h2>
+            <p>{{ project.description }}</p>
+        </div>
+        <div class="project-meta project-meta-v2">
+            <span>Deadline <strong>{{ project.deadline }}</strong></span>
+            <span>Team size <strong>{{ project.team_size }}</strong></span>
+        </div>
+    </div>
+
+    <section class="dashboard-section chart-panel-v2">
+        <div class="section-heading section-heading-v2">
+            <div>
+                <span class="eyebrow">Team Graph</span>
+                <h2>Completion by team</h2>
+                <p>Each bar represents one team in this project.</p>
+            </div>
+        </div>
+        <div id="team-completion-chart-{{ project.id }}" class="team-completion-chart canvas-chart-shell" data-project-id="{{ project.id }}">
+            <canvas id="team-completion-canvas-{{ project.id }}" height="260" aria-label="Team completion bar chart"></canvas>
+            <div id="team-completion-legend-{{ project.id }}" class="chart-legend"></div>
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-title-row">
+            <div>
+                <h3>Team cards</h3>
+                <p>Assign team leads, move students between teams, or remove and reassign students from the unassigned list.</p>
+            </div>
+            <div class="project-actions project-actions-v2">
+                <button class="btn success-btn" onclick="runTeamMatchmakingOptimization('{{ project.id }}')">Generate teams</button>
+                <button class="btn ghost-btn" onclick="loadRosterPrintData('{{ project.id }}')">Refresh teams</button>
+            </div>
+        </div>
+        <div id="teams-allocation-view-{{ project.id }}" class="team-card-grid"></div>
+        <div id="eligible-students-{{ project.id }}" class="eligible-student-strip"></div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-title-row">
+            <div>
+                <h3>Quiz matrix</h3>
+                <p>Review submitted flashcard answers and save marks.</p>
+            </div>
+            <button class="btn ghost-btn" onclick="loadStatusMatrix('{{ project.id }}')">Refresh quiz matrix</button>
+        </div>
+        <div id="status-matrix-{{ project.id }}" class="status-matrix"></div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-title-row">
+            <div>
+                <h3>Team lead doubts</h3>
+                <p>Only team leads can open this chat from the student side. Faculty replies stay attached to the team.</p>
+            </div>
+            <button class="btn ghost-btn" onclick="clearProjectMessages('{{ project.id }}')">Refresh messages</button>
+        </div>
+        <div id="messages-panel-{{ project.id }}" class="messages-panel"></div>
+    </section>
+</section>
+
+<script src="{{ url_for('static', filename='js/faculty.js') }}"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    loadTeamCompletionGraph("{{ project.id }}");
+    loadRosterPrintData("{{ project.id }}");
+    loadStatusMatrix("{{ project.id }}");
+    loadProjectMessages("{{ project.id }}");
+});
+</script>
+{% endblock %}

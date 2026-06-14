@@ -5,6 +5,11 @@
 
 let selectedScheduleBinaryArray = Array(24).fill(0); // Holds 24 hourly matrix slots
 
+function notifySync(message, type = "success") {
+    if (window.showSyncToast) showSyncToast(message, type);
+    else alert(message);
+}
+
 // 1. FETCH CRITERIA AND ASSEMBLE INTERACTIVE SLIDERS
 function fetchDynamicProjectRequirements() {
     const projectId = document.getElementById('project-selector').value;
@@ -88,7 +93,7 @@ function dispatchStudentAssessment() {
     })
     .then(res => res.json())
     .then(data => {
-        alert(data.message);
+        notifySync(data.message, data.success ? "success" : "error");
         if (data.success) {
             window.location.href = '/student/dashboard';
         }
@@ -109,7 +114,7 @@ function dispatchFlashcardAnswers() {
     })
     .then(res => res.json())
     .then(data => {
-        alert(data.message);
+        notifySync(data.message, data.success ? "success" : "error");
         if (data.success) window.location.reload();
     });
 }
@@ -131,7 +136,68 @@ function dispatchMilestoneProgress(projectId, teamNumber) {
     })
     .then(res => res.json())
     .then(data => {
-        alert(data.message);
+        notifySync(data.message, data.success ? "success" : "error");
         if (data.success) window.location.reload();
     });
+}
+
+function escapeHtml(value) {
+    return String(value || "").replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#039;"
+    }[char]));
+}
+
+function loadStudentTeamMessages(projectId) {
+    const messageList = document.getElementById('student-team-messages');
+    if (!messageList) return;
+
+    fetch(`/api/project/${projectId}/messages?channel_type=team`)
+    .then(res => res.json())
+    .then(messages => {
+        if (!Array.isArray(messages) || messages.length === 0) {
+            messageList.innerHTML = `<p class="muted-text">No messages yet.</p>`;
+            return;
+        }
+        messageList.innerHTML = messages.map(message => `
+            <p>
+                <strong>${escapeHtml(message.sender)}</strong>
+                <small>${escapeHtml(message.created_at)}</small><br>
+                ${escapeHtml(message.body)}
+            </p>
+        `).join("");
+    });
+}
+
+function sendStudentTeamMessage(projectId) {
+    const field = document.getElementById('student-team-message-body');
+    if (!field) return;
+
+    fetch(`/api/project/${projectId}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ channel_type: 'team', body: field.value.trim() })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.success) {
+            notifySync(data.message || data.error || "Message could not be sent.", "error");
+            return;
+        }
+        field.value = "";
+        loadStudentTeamMessages(projectId);
+    });
+}
+
+function clearStudentTeamMessages(projectId) {
+    fetch(`/api/project/${projectId}/messages?channel_type=team`, { method: 'DELETE' })
+    .then(res => res.json())
+    .then(data => {
+        notifySync(data.message || data.error || "Messages cleared.", data.success ? "success" : "error");
+        loadStudentTeamMessages(projectId);
+    })
+    .catch(() => notifySync("Unable to clear messages. Please try again.", "error"));
 }

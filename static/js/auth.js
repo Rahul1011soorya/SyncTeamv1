@@ -3,6 +3,11 @@
  * Binds tenant workspace isolation criteria codes onto validation transport packets.
  */
 
+function notifySync(message, type = "success", afterClose = null) {
+    if (window.showSyncToast) showSyncToast(message, type, afterClose);
+    else alert(message);
+}
+
 function executeAuthentication() {
     const userIn = document.getElementById('username').value.trim();
     const passIn = document.getElementById('password').value.trim();
@@ -71,8 +76,9 @@ function executeRegistration() {
     })
     .then(res => res.json())
     .then(data => {
-        alert(data.message);
-        if (data.success) window.location.href = `/portal/${signupRole}?inst_code=${instCode}`;
+        notifySync(data.message, data.success ? "success" : "error", data.success ? () => {
+            window.location.href = `/portal/${signupRole}?inst_code=${instCode}`;
+        } : null);
     });
 }
 

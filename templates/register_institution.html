@@ -61,8 +61,9 @@ function dispatchInstitutionRegistration() {
     })
     .then(res => res.json())
     .then(data => {
-        alert(data.message);
-        if (data.success) window.location.href = '/';
+        showSyncToast(data.message, data.success ? "success" : "error", data.success ? () => {
+            window.location.href = '/';
+        } : null);
     });
 }
 </script>

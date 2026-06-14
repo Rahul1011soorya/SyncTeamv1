@@ -123,6 +123,93 @@
         </table>
     </div>
 
+    <div class="panel" style="border-top:4px solid var(--slate-900);">
+        <h2>Add Student or Faculty</h2>
+        <p class="panel-desc">Create an approved account for someone who is not already in the MBCET database.</p>
+
+        <div class="form-row">
+            <div class="input-set">
+                <label for="admin_new_role">Role</label>
+                <select id="admin_new_role" class="admin-new-user-field">
+                    <option value="student">Student</option>
+                    <option value="faculty">Faculty</option>
+                </select>
+            </div>
+            <div class="input-set">
+                <label for="admin_new_name">Full name</label>
+                <input type="text" id="admin_new_name" class="admin-new-user-field caps-only" placeholder="FULL NAME">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="input-set">
+                <label for="admin_new_username">Username</label>
+                <input type="text" id="admin_new_username" class="admin-new-user-field" placeholder="account username">
+            </div>
+            <div class="input-set">
+                <label for="admin_new_password">Password</label>
+                <input type="password" id="admin_new_password" class="admin-new-user-field" placeholder="temporary password">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="input-set">
+                <label for="admin_new_roll_no">Student roll number</label>
+                <input type="text" id="admin_new_roll_no" class="admin-new-user-field caps-only" placeholder="B24CS1101">
+            </div>
+            <div class="input-set">
+                <label for="admin_new_faculty_id">Faculty ID</label>
+                <input type="text" id="admin_new_faculty_id" class="admin-new-user-field caps-only" placeholder="MBTCSA13">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="input-set">
+                <label for="admin_new_stream">Department</label>
+                <input type="text" id="admin_new_stream" class="admin-new-user-field" placeholder="COMPUTER SCIENCE">
+            </div>
+            <div class="input-set">
+                <label for="admin_new_class">Class</label>
+                <input type="text" id="admin_new_class" class="admin-new-user-field" placeholder="CS CLASS 1">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="input-set">
+                <label for="admin_new_batch">Batch / section</label>
+                <input type="text" id="admin_new_batch" class="admin-new-user-field" placeholder="1">
+            </div>
+            <div class="input-set">
+                <label for="admin_new_semester">Semester</label>
+                <input type="text" id="admin_new_semester" class="admin-new-user-field" placeholder="S1">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="input-set">
+                <label for="admin_new_year">Academic year</label>
+                <input type="text" id="admin_new_year" class="admin-new-user-field" placeholder="2024-2028">
+            </div>
+            <div class="input-set">
+                <label for="admin_new_subject">Faculty subject</label>
+                <input type="text" id="admin_new_subject" class="admin-new-user-field" placeholder="DATABASE SYSTEMS">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="input-set">
+                <label for="admin_new_age">Age</label>
+                <input type="number" id="admin_new_age" class="admin-new-user-field" min="15" placeholder="18">
+            </div>
+            <div class="input-set">
+                <label for="admin_new_enrollment_year">Enrollment year</label>
+                <input type="text" id="admin_new_enrollment_year" class="admin-new-user-field" placeholder="2024">
+            </div>
+        </div>
+
+        <button class="btn success-btn" onclick="createAdminManagedUser()">Create Account</button>
+    </div>
+
     <div class="panel" style="border-top:4px solid var(--indigo-700);">
         <h2>Teacher Directory</h2>
         <p class="panel-desc">Filter faculty independently by department and review their access status.</p>
@@ -168,7 +255,7 @@ function saveConventionFormats() {
             semester_format: document.getElementById('fmt_sem').value
         })
     })
-    .then(res => res.json()).then(data => alert(data.message));
+    .then(res => res.json()).then(data => showSyncToast(data.message, data.success ? "success" : "error"));
 }
 </script>
 {% endblock %}

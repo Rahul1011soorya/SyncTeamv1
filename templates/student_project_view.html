@@ -33,22 +33,42 @@
         {% endif %}
     </div>
 
-    <div class="panel" style="border-top: 4px solid var(--slate-800); background:#fcfcfc;">
-        <h2>Team Leadership Progress Desk</h2>
-        <p class="panel-desc">If nominated as Team Lead by the faculty, update project percentage completion progress logs below.</p>
-        
-        <div class="form-row" style="align-items:end; gap:2rem;">
-            <div class="input-set" style="flex-grow:1; margin-bottom:0;">
-                <label>Completion Percentage Target Score Matrix: <span id="pct_val" style="color:var(--indigo-600); font-weight:800;">0</span>%</label>
-                <input type="range" id="progress_percentage_slider" min="0" max="100" value="0" style="width:100%; margin-top:1rem;" oninput="document.getElementById('pct_val').innerText = this.value">
+    {% if team_assignment and team_assignment.is_team_lead %}
+        <div class="panel" style="border-top: 4px solid var(--slate-800); background:#fcfcfc;">
+            <h2>Team Leadership Progress Desk</h2>
+            <p class="panel-desc">You are Team {{ team_assignment.team_number }} lead. Update progress and ask faculty doubts from this desk.</p>
+            
+            <div class="form-row" style="align-items:end; gap:2rem;">
+                <div class="input-set" style="flex-grow:1; margin-bottom:0;">
+                    <label>Completion Percentage: <span id="pct_val" style="color:var(--indigo-600); font-weight:800;">{{ team_progress.completion_percentage if team_progress else 0 }}</span>%</label>
+                    <input type="range" id="progress_percentage_slider" min="0" max="100" value="{{ team_progress.completion_percentage if team_progress else 0 }}" style="width:100%; margin-top:1rem;" oninput="document.getElementById('pct_val').innerText = this.value">
+                </div>
+                <div class="input-set" style="flex-grow:2; margin-bottom:0;">
+                    <label for="progress_summary_text">Progress summary:</label>
+                    <input type="text" id="progress_summary_text" value="{{ team_progress.status_summary if team_progress else '' }}" placeholder="e.g., Database entities mapped and UI routes tested.">
+                </div>
+                <button class="btn primary-btn" style="background:var(--slate-900);" onclick="dispatchMilestoneProgress('{{ project.id }}', '{{ team_assignment.team_number }}')">Submit Update</button>
             </div>
-            <div class="input-set" style="flex-grow:2; margin-bottom:0;">
-                <label for="progress_summary_text">Status Progress Brief Summary Description:</label>
-                <input type="text" id="progress_summary_text" placeholder="e.g., Database entities mapped, UI routers currently running into local sandbox environment.">
-            </div>
-            <button class="btn primary-btn" style="background:var(--slate-900);" onclick="dispatchMilestoneProgress('{{ project.id }}', 1)">Submit Milestone Update</button>
         </div>
-    </div>
+
+        <div class="panel" id="team-lead-doubt-card" style="border-top: 4px solid var(--indigo-600);">
+            <div class="panel-title-row">
+                <div>
+                    <h2>Faculty Doubt Chat</h2>
+                    <p class="panel-desc">Only the Team {{ team_assignment.team_number }} lead can send questions to faculty for this team.</p>
+                </div>
+                <button class="btn ghost-btn" onclick="clearStudentTeamMessages('{{ project.id }}')">Refresh messages</button>
+            </div>
+            <div id="student-team-messages" class="message-list"></div>
+            <textarea id="student-team-message-body" rows="3" placeholder="Ask a question or doubt for faculty."></textarea>
+            <button class="btn primary-btn" style="margin-top:0.75rem;" onclick="sendStudentTeamMessage('{{ project.id }}')">Send to Faculty</button>
+        </div>
+    {% elif team_assignment %}
+        <div class="panel" style="border-top: 4px solid var(--slate-300);">
+            <h2>Team {{ team_assignment.team_number }}</h2>
+            <p class="panel-desc">Your team lead handles progress updates and faculty doubt messages for this project.</p>
+        </div>
+    {% endif %}
 
     <div class="panel" id="student-intake-card" style="border-top: 4px solid var(--emerald-600);">
         <h2>Self-Assessment Evaluation Index</h2>
@@ -65,6 +85,9 @@
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     fetchDynamicProjectRequirements();
+    {% if team_assignment and team_assignment.is_team_lead %}
+    loadStudentTeamMessages("{{ project.id }}");
+    {% endif %}
 });
 </script>
 {% endblock %}
