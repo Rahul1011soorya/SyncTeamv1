@@ -174,3 +174,4 @@ class CommunicationMessage(db.Model):
     channel_type = db.Column(db.String(20), nullable=False, default='private')
     body = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+

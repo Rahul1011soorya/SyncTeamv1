@@ -1421,3 +1421,254 @@ input:focus, textarea:focus, select:focus {
         min-width: 0;
     }
 }
+/* ================================= */
+/* ABOUT SECTION */
+/* ================================= */
+
+.about-section {
+    padding: 80px 20px;
+    background: #f8fafc;
+}
+
+.about-container {
+    max-width: 1200px;
+    margin: auto;
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.section-header h2 {
+    font-size: 2.5rem;
+    color: #0f172a;
+    margin-bottom: 20px;
+}
+
+.section-header p {
+    max-width: 900px;
+    margin: auto;
+    color: #64748b;
+    line-height: 1.8;
+}
+
+.about-card {
+    background: white;
+    margin-bottom: 25px;
+    padding: 30px;
+    border-radius: 15px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.about-card h3 {
+    color: #2563eb;
+    margin-bottom: 15px;
+}
+
+.about-card p {
+    color: #475569;
+    line-height: 1.8;
+}
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.feature-box {
+    background: #eff6ff;
+    padding: 20px;
+    border-radius: 10px;
+    border-left: 4px solid #2563eb;
+    font-weight: 500;
+}
+
+.vision-list {
+    margin: 20px 0;
+    padding-left: 25px;
+}
+
+.vision-list li {
+    margin-bottom: 10px;
+}
+
+.team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+    gap: 20px;
+}
+
+.team-member {
+    text-align: center;
+    padding: 25px;
+    background: #eff6ff;
+    border-radius: 12px;
+}
+
+.team-member h4 {
+    color: #1e293b;
+}
+
+.goal-card {
+    background: linear-gradient(135deg,#1e3a8a,#2563eb);
+    color: white;
+    padding: 40px;
+    border-radius: 20px;
+    text-align: center;
+}
+
+.goal-card h3 {
+    margin-bottom: 15px;
+}
+
+.goal-card p {
+    max-width: 800px;
+    margin: auto;
+    line-height: 1.8;
+}
+
+/* ==========================
+   CONTACT PAGE
+========================== */
+
+.contact-container {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 30px;
+}
+
+.contact-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+.contact-title {
+    text-align: center;
+    margin-bottom: 10px;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.contact-subtitle {
+    text-align: center;
+    color: #64748b;
+    margin-bottom: 30px;
+}
+
+.contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #334155;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 15px;
+    outline: none;
+    transition: 0.3s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(14,165,233,0.15);
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 140px;
+}
+
+.submit-btn {
+    background: #0ea5e9;
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.submit-btn:hover {
+    background: #0284c7;
+}
+
+.contact-info {
+    margin-top: 40px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.info-card {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 20px;
+    border-left: 4px solid #0ea5e9;
+}
+
+.info-card h3 {
+    margin-bottom: 10px;
+    color: #0f172a;
+}
+
+.info-card p {
+    color: #475569;
+    line-height: 1.6;
+}
+
+/* Validation Message */
+
+.error-message {
+    color: #dc2626;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+.success-message {
+    color: #16a34a;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+/* Mobile */
+
+@media (max-width: 768px) {
+
+    .contact-container {
+        padding: 15px;
+    }
+
+    .contact-card {
+        padding: 20px;
+    }
+
+    .contact-title {
+        font-size: 1.6rem;
+    }
+}

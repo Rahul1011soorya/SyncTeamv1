@@ -1,20 +1,134 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div style="margin-bottom: 1.5rem;">
+<style>
+@media print {
+    /* 1. Eliminate non-report web interface wrappers */
+    .navbar, 
+    .system-footer-deck, 
+    .floating-deploy-btn, 
+    .back-to-dashboard-wrap, 
+    .chart-panel-v2, 
+    .project-actions,
+    .unassigned-pool-panel,
+    .quiz-matrix-panel,
+    .doubts-panel,
+    .team-actions,
+    .panel-title-row p,
+    button,
+    select {
+        display: none !important;
+    }
+
+    /* 2. Reset workspace body dimensions */
+    body, .content-wrapper, .project-detail-shell {
+        background: #ffffff !important;
+        color: #000000 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        box-shadow: none !important;
+    }
+
+    /* 3. Re-skin the Hero Panel into a clean formal header framework */
+    .panel.project-detail-hero {
+        border: none !important;
+        border-bottom: 2px solid #000000 !important;
+        border-radius: 0 !important;
+        padding: 0 0 12px 0 !important;
+        margin-bottom: 20px !important;
+        box-shadow: none !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: flex-start !important;
+    }
+
+    .panel.project-detail-hero h2 {
+        font-size: 1.8rem !important;
+        color: #000000 !important;
+        margin-bottom: 8px !important;
+    }
+
+    .project-meta-v2 {
+        border: none !important;
+        background: none !important;
+        padding: 0 !important;
+        text-align: right !important;
+        font-size: 0.95rem !important;
+    }
+
+    /* 4. Format Team Cards into a side-by-side balanced multi-column layout */
+    .panel.roster-print-panel {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .panel.roster-print-panel h3 {
+        display: none !important; 
+    }
+
+    /* CHANGED: Set up a 2-column layout grid to fit cards side-by-side and remove gaps */
+    .team-card-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 15px !important;
+        width: 100% !important;
+    }
+
+    .team-card {
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 6px !important;
+        padding: 12px !important;
+        margin-bottom: 0 !important; /* Managed cleanly by grid gap now */
+        page-break-inside: avoid !important; 
+        background: #ffffff !important;
+        box-shadow: none !important;
+        height: auto !important;
+    }
+
+    .team-card h4 {
+        font-size: 1.2rem !important;
+        color: #000000 !important;
+        border-bottom: 1px solid #475569 !important;
+        padding-bottom: 2px !important;
+        margin-bottom: 8px !important;
+    }
+
+    .team-member-row {
+        border-bottom: 1px dashed #e2e8f0 !important;
+        padding: 4px 0 !important;
+        margin: 0 !important;
+    }
+
+    /* 5. Force background tint printing for mutual overlap indicators */
+    .team-card div[style*="background"] {
+        background: #f1f5f9 !important;
+        border: 1px solid #cbd5e1 !important;
+        border-left: 4px solid #4f46e5 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        margin-bottom: 8px !important;
+        padding: 6px 10px !important;
+    }
+}
+</style>
+
+<div class="back-to-dashboard-wrap" style="margin-bottom: 1.5rem;">
     <a href="/faculty/dashboard" style="color: var(--indigo-600); text-decoration: none; font-weight: 700;">Back to faculty dashboard</a>
 </div>
 
 <section class="project-detail-shell">
     <div class="panel project-detail-hero">
         <div>
-            <span class="eyebrow">Project Detail</span>
+            <span class="eyebrow">Project Allocation Roster</span>
             <h2>{{ project.project_name }}</h2>
-            <p>{{ project.description }}</p>
+            <p style="margin-top: 5px; max-width: 65ch;">{{ project.description }}</p>
         </div>
         <div class="project-meta project-meta-v2">
-            <span>Deadline <strong>{{ project.deadline }}</strong></span>
-            <span>Team size <strong>{{ project.team_size }}</strong></span>
+            <span style="display:block; margin-bottom: 0.35rem;">Faculty Instructor: <strong style="color:#000000;">{{ session.get('real_name') }}</strong></span>
+            <span style="display:block;">Deadline: <strong style="color:#000000;">{{ project.deadline }}</strong></span>
         </div>
     </div>
 
@@ -32,7 +146,7 @@
         </div>
     </section>
 
-    <section class="panel">
+    <section class="panel roster-print-panel">
         <div class="panel-title-row">
             <div>
                 <h3>Team cards</h3>
@@ -40,14 +154,15 @@
             </div>
             <div class="project-actions project-actions-v2">
                 <button class="btn success-btn" onclick="runTeamMatchmakingOptimization('{{ project.id }}')">Generate teams</button>
-                <button class="btn ghost-btn" onclick="loadRosterPrintData('{{ project.id }}')">Refresh teams</button>
+                <button class="btn primary-btn" style="background: var(--slate-900);" onclick="triggerSystemPrintOperation()">Print Roster Report</button>
             </div>
         </div>
         <div id="teams-allocation-view-{{ project.id }}" class="team-card-grid"></div>
-        <div id="eligible-students-{{ project.id }}" class="eligible-student-strip"></div>
+        
+        <div id="eligible-students-{{ project.id }}" class="eligible-student-strip unassigned-pool-panel"></div>
     </section>
 
-    <section class="panel">
+    <section class="panel quiz-matrix-panel">
         <div class="panel-title-row">
             <div>
                 <h3>Quiz matrix</h3>
@@ -58,7 +173,7 @@
         <div id="status-matrix-{{ project.id }}" class="status-matrix"></div>
     </section>
 
-    <section class="panel">
+    <section class="panel doubts-panel">
         <div class="panel-title-row">
             <div>
                 <h3>Team lead doubts</h3>

@@ -2,6 +2,27 @@
 
 {% block content %}
 <div class="admin-workspace-layout">
+    <h2 style="font-size: 1.4rem; font-weight: 700; color: var(--slate-800); margin-bottom: 0.75rem;">Current stats</h2>
+    <section class="metric-grid metric-grid-v2" style="margin-bottom: 2rem;" aria-label="Dashboard metrics">
+        <div class="metric-tile metric-tile-v2" style="border-top: 0; border-left: 4px solid var(--indigo-600);">
+            <span>{{ project_count }}</span>
+            <p>Active projects</p>
+        </div>
+        <div class="metric-tile metric-tile-v2" style="border-top: 0; border-left: 4px solid var(--emerald-600);">
+            <span>{{ student_count }}</span>
+            <p>Students in directory</p>
+        </div>
+        <div class="metric-tile metric-tile-v2" style="border-top: 0; border-left: 4px solid #0891b2;">
+            <span>{{ faculty_count }}</span>
+            <p>Faculty in directory</p>
+        </div>
+        <div class="metric-tile metric-tile-v2" style="border-top: 0; border-left: 4px solid #d97706;">
+            <span>{{ team_count }}</span>
+            <p>Total teams assigned</p>
+        </div>
+        
+    </section>
+
     <div class="panel" style="border-top:4px solid var(--rose-600);">
         <h2>Faculty Gatekeeper Approval Queue</h2>
         <p class="panel-desc">New faculty accounts stay pending until this office grants workspace access.</p>
@@ -125,18 +146,18 @@
 
     <div class="panel" style="border-top:4px solid var(--slate-900);">
         <h2>Add Student or Faculty</h2>
-        <p class="panel-desc">Create an approved account for someone who is not already in the MBCET database.</p>
+        <p class="panel-desc">Create an approved account matching global template placeholder configurations.</p>
 
         <div class="form-row">
             <div class="input-set">
-                <label for="admin_new_role">Role</label>
-                <select id="admin_new_role" class="admin-new-user-field">
-                    <option value="student">Student</option>
+                <label for="admin_new_role">Role Type</label>
+                <select id="admin_new_role" class="admin-new-user-field" onchange="toggleFormFieldsByRole()">
+                    <option value="student" selected>Student</option>
                     <option value="faculty">Faculty</option>
                 </select>
             </div>
             <div class="input-set">
-                <label for="admin_new_name">Full name</label>
+                <label for="admin_new_name">Full Name</label>
                 <input type="text" id="admin_new_name" class="admin-new-user-field caps-only" placeholder="FULL NAME">
             </div>
         </div>
@@ -154,56 +175,56 @@
 
         <div class="form-row">
             <div class="input-set">
-                <label for="admin_new_roll_no">Student roll number</label>
-                <input type="text" id="admin_new_roll_no" class="admin-new-user-field caps-only" placeholder="B24CS1101">
+                <label for="admin_new_stream">Department / Stream</label>
+                <input type="text" id="admin_new_stream" class="admin-new-user-field" placeholder="e.g., COMPUTER SCIENCE">
             </div>
-            <div class="input-set">
-                <label for="admin_new_faculty_id">Faculty ID</label>
-                <input type="text" id="admin_new_faculty_id" class="admin-new-user-field caps-only" placeholder="MBTCSA13">
+            <div class="input-set faculty-field" style="display: none;">
+                <label for="admin_new_subject">Faculty Subject Specialization</label>
+                <input type="text" id="admin_new_subject" class="admin-new-user-field" placeholder="DATABASE SYSTEMS">
             </div>
-        </div>
-
-        <div class="form-row">
-            <div class="input-set">
-                <label for="admin_new_stream">Department</label>
-                <input type="text" id="admin_new_stream" class="admin-new-user-field" placeholder="COMPUTER SCIENCE">
-            </div>
-            <div class="input-set">
-                <label for="admin_new_class">Class</label>
+            <div class="input-set student-field">
+                <label for="admin_new_class">Class Room Assignment</label>
                 <input type="text" id="admin_new_class" class="admin-new-user-field" placeholder="CS CLASS 1">
             </div>
         </div>
 
-        <div class="form-row">
+        <div class="form-row student-field">
             <div class="input-set">
-                <label for="admin_new_batch">Batch / section</label>
-                <input type="text" id="admin_new_batch" class="admin-new-user-field" placeholder="1">
+                <label for="admin_new_roll_no">Student Roll Number</label>
+                <input type="text" id="admin_new_roll_no" class="admin-new-user-field caps-only" placeholder="e.g., B24CS1201">
             </div>
             <div class="input-set">
-                <label for="admin_new_semester">Semester</label>
-                <input type="text" id="admin_new_semester" class="admin-new-user-field" placeholder="S1">
-            </div>
-        </div>
-
-        <div class="form-row">
-            <div class="input-set">
-                <label for="admin_new_year">Academic year</label>
-                <input type="text" id="admin_new_year" class="admin-new-user-field" placeholder="2024-2028">
-            </div>
-            <div class="input-set">
-                <label for="admin_new_subject">Faculty subject</label>
-                <input type="text" id="admin_new_subject" class="admin-new-user-field" placeholder="DATABASE SYSTEMS">
+                <label for="admin_new_year">Academic Year Bounds</label>
+                <input type="text" id="admin_new_year" class="admin-new-user-field" placeholder="e.g., 2024-2028">
             </div>
         </div>
 
-        <div class="form-row">
+        <div class="form-row student-field">
+            <div class="input-set">
+                <label for="admin_new_batch">Batch / Section Variant</label>
+                <input type="text" id="admin_new_batch" class="admin-new-user-field" placeholder="e.g., Batch 1">
+            </div>
+            <div class="input-set">
+                <label for="admin_new_semester">Semester Progression Scope</label>
+                <input type="text" id="admin_new_semester" class="admin-new-user-field" placeholder="e.g., S1">
+            </div>
+        </div>
+
+        <div class="form-row student-field">
             <div class="input-set">
                 <label for="admin_new_age">Age</label>
                 <input type="number" id="admin_new_age" class="admin-new-user-field" min="15" placeholder="18">
             </div>
             <div class="input-set">
-                <label for="admin_new_enrollment_year">Enrollment year</label>
+                <label for="admin_new_enrollment_year">Enrollment Year</label>
                 <input type="text" id="admin_new_enrollment_year" class="admin-new-user-field" placeholder="2024">
+            </div>
+        </div>
+
+        <div class="form-row faculty-field" style="display: none;">
+            <div class="input-set" style="max-width: 50%;">
+                <label for="admin_new_faculty_id">Faculty Unique ID</label>
+                <input type="text" id="admin_new_faculty_id" class="admin-new-user-field caps-only" placeholder="e.g., FAC-CS-XXXX">
             </div>
         </div>
 
@@ -238,6 +259,50 @@
             </tbody>
         </table>
     </div>
+    <div class="panel">
+    <h2>Contact Requests</h2>
+
+    <table class="admin-data-table" style="width:100%;">
+        <thead>
+            <tr>
+                <th>User Type</th>
+                <th>Name</th>
+                <th>Class / Department</th>
+                <th>ID</th>
+                <th>Subject</th>
+                <th>Message</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for req in contact_requests %}
+            <tr>
+                <td>{{ req.user_type }}</td>
+                <td>{{ req.name }}</td>
+                <td>{{ req.class_department }}</td> <td>{{ req.roll_faculty_id }}</td>  <td>{{ req.subject }}</td>
+                <td>{{ req.message }}</td>
+
+                <td>
+                    {% if req.status == 'Pending' %}
+                    <a href="/approve_contact/{{ req.id }}" class="btn success-btn">
+                        Approve
+                    </a>
+                    {% else %}
+                    Approved
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" style="text-align: center; color: #888; padding: 20px;">
+                    No contact requests found.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 </div>
 
 <script src="{{ url_for('static', filename='js/faculty.js') }}"></script>
@@ -257,5 +322,150 @@ function saveConventionFormats() {
     })
     .then(res => res.json()).then(data => showSyncToast(data.message, data.success ? "success" : "error"));
 }
+
+function toggleFormFieldsByRole() {
+    const chosenRole = document.getElementById('admin_new_role').value;
+    const studentFields = document.querySelectorAll('.student-field');
+    const facultyFields = document.querySelectorAll('.faculty-field');
+
+    if (chosenRole === 'student') {
+        studentFields.forEach(el => el.style.display = '');
+        facultyFields.forEach(el => el.style.display = 'none');
+    } else {
+        studentFields.forEach(el => el.style.display = 'none');
+        facultyFields.forEach(el => el.style.display = '');
+    }
+}
+
+function createAdminManagedUser() {
+    const role = document.getElementById('admin_new_role').value;
+    
+    // 1. Gather Shared Core Authentication Fields
+    const usernameField = document.getElementById('admin_new_username');
+    const passwordField = document.getElementById('admin_new_password');
+    const nameField = document.getElementById('admin_new_name');
+    const streamField = document.getElementById('admin_new_stream');
+
+    const payload = {
+        role: role,
+        username: usernameField.value.trim(),
+        password: passwordField.value,
+        real_name: nameField.value.trim(),
+        stream: streamField.value.trim()
+    };
+
+    // 2. Gather Role-Specific Details Dynamic Fields
+    if (role === 'student') {
+        payload.student_roll_no = document.getElementById('admin_new_roll_no').value.trim();
+        payload.class_name = document.getElementById('admin_new_class').value.trim();
+        payload.academic_year = document.getElementById('admin_new_year').value.trim();
+        payload.batch = document.getElementById('admin_new_batch').value.trim();
+        payload.semester = document.getElementById('admin_new_semester').value.trim();
+        payload.age = document.getElementById('admin_new_age').value;
+        payload.enrollment_year = document.getElementById('admin_new_enrollment_year').value.trim();
+    } else {
+        payload.faculty_id = document.getElementById('admin_new_faculty_id').value.trim();
+        payload.subject_specialization = document.getElementById('admin_new_subject').value.trim();
+    }
+
+    // 3. Post to system backend with robust UI response handlers
+    fetch('/api/admin/create-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(res => {
+        if (!res.ok) {
+            // Handle server crashes or raw HTTP status error bounds (400, 403, 500)
+            return res.json().then(errData => { throw new Error(errData.message || "Server rejected request parameters."); });
+        }
+        return res.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // SUCCESS: Trigger your standard system animated tick popup window modal layout
+            showSuccessModalWithAnimation(data.message, () => {
+                window.location.reload(); // Reload after professor finishes looking at the tick checkmark
+            });
+        } else {
+            // FAILURE: Backend rejected formatting pattern. Display the error directly inside a modal.
+            showSystemErrorBanner(data.message || "Failed formatting rules constraint.");
+        }
+    })
+    .catch(error => {
+        console.error("Account Creation Exception:", error);
+        showSystemErrorBanner("Connection error or incorrect layout fields: " + error.message);
+    });
+}
+
+/**
+ * 🎨 UI Helper: Renders your standardized premium animated green checkmark popup modal matching profile lockouts
+ */
+function showSuccessModalWithAnimation(messageText, callbackOnClose) {
+    // Check if an old modal shell is lingering and purge it
+    const existingModal = document.getElementById('sync-global-success-modal');
+    if (existingModal) existingModal.remove();
+
+    const modalHtml = `
+        <div id="sync-global-success-modal" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 99999; animation: fadeIn 0.25s ease-out;">
+            <div style="background: #ffffff; width: 380px; padding: 2.5rem 2rem; border-radius: 16px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); transform: scale(0.9); animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;">
+                
+                <div style="width: 80px; height: 80px; background: #f0fdf4; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin: 0 auto 1.5rem auto;">
+                    <svg style="width: 44px; height: 44px; color: #16a34a;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" style="stroke-dasharray: 50; stroke-dashoffset: 50; animation: drawCheck 0.4s ease-in-out 0.15s forwards;" />
+                    </svg>
+                </div>
+                
+                <h3 style="color: #0f172a; font-size: 1.35rem; font-weight: 700; margin-bottom: 0.5rem;">Account Registered</h3>
+                <p style="color: #475569; font-size: 0.92rem; line-height: 1.5; margin-bottom: 1.5rem;">${messageText}</p>
+                
+                <button id="success-modal-close-btn" class="btn primary-btn" style="width: 100%; padding: 0.65rem; background: #16a34a; border-radius: 8px; font-weight: 600;">Continue Workspace</button>
+            </div>
+        </div>
+        
+        <style>
+            @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes popIn { to { transform: scale(1); } }
+            @keyframes drawCheck { to { stroke-dashoffset: 0; } }
+        </style>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    document.getElementById('success-modal-close-btn').addEventListener('click', () => {
+        document.getElementById('sync-global-success-modal').remove();
+        if (typeof callbackOnClose === 'function') callbackOnClose();
+    });
+}
+
+/**
+ * ⚠️ UI Helper: Renders an error alert modal block explicitly pointing out field formatting errors
+ */
+function showSystemErrorBanner(errorMessage) {
+    const existingBanner = document.getElementById('sync-global-error-banner');
+    if (existingBanner) existingBanner.remove();
+
+    const errorHtml = `
+        <div id="sync-global-error-banner" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.4); display: flex; justify-content: center; align-items: center; z-index: 99999;">
+            <div style="background: #ffffff; width: 400px; padding: 2rem; border-radius: 12px; border-top: 5px solid #dc2626; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">
+                <div style="display: flex; gap: 0.75rem; align-items: flex-start; margin-bottom: 1.25rem;">
+                    <span style="background: #fee2e2; color: #dc2626; font-size: 1.25rem; font-weight: bold; width: 28px; height: 28px; display: flex; justify-content: center; align-items: center; border-radius: 50%;">!</span>
+                    <div>
+                        <h4 style="color: #991b1b; font-weight: 700; font-size: 1.05rem; margin: 0 0 0.25rem 0;">Data Format Error</h4>
+                        <p style="color: #64748b; font-size: 0.88rem; line-height: 1.4; margin: 0;">The data entered does not match the system constraints or structural parameters.</p>
+                    </div>
+                </div>
+                <div style="background: #f8fafc; padding: 0.75rem; border-radius: 6px; border: 1px solid #e2e8f0; font-family: monospace; font-size: 0.85rem; color: #334155; margin-bottom: 1.25rem; word-break: break-word;">
+                    ${errorMessage}
+                </div>
+                <button onclick="document.getElementById('sync-global-error-banner').remove()" class="btn" style="width: 100%; background: #475569; color: white; padding: 0.5rem; border-radius: 6px;">Review Data Fields</button>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', errorHtml);
+}
+
+// Call instantly on layout load to ensure starting elements match default 'student' selection bounds cleanly
+document.addEventListener("DOMContentLoaded", toggleFormFieldsByRole);
 </script>
 {% endblock %}

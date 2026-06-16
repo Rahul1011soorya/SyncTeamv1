@@ -394,7 +394,11 @@ function loadRosterPrintData(projectId) {
     Promise.all([
         fetch(`/api/project/${projectId}/roster-report`).then(res => res.json()),
         fetch(`/api/project/${projectId}/eligible-students`).then(res => res.json())
-    ]).then(([teams, eligible]) => {
+    ]).then(([reportData, eligible]) => {
+        // Safely unpack the updated backend nested structure
+        const teams = reportData.teams || {};
+        const overlaps = reportData.overlaps || {};
+        
         const output = document.getElementById(`teams-allocation-view-${projectId}`);
         const eligibleStrip = document.getElementById(`eligible-students-${projectId}`);
         if (!output) return;
@@ -409,9 +413,20 @@ function loadRosterPrintData(projectId) {
 
         Object.entries(teams).forEach(([teamNum, members]) => {
             const options = Object.keys(teams).map(num => `<option value="${num}">Team ${num}</option>`).join("");
+            const teamOverlap = overlaps[teamNum] || "No schedule details recorded";
+            
             output.innerHTML += `
-                <div class="team-card">
-                    <div class="team-card-head"><h4>Team ${teamNum}</h4><span>${members.length} members</span></div>
+                <div class="team-card" style="page-break-inside: avoid; margin-bottom: 1.5rem;">
+                    <div class="team-card-head">
+                        <h4>Team ${teamNum}</h4>
+                        <span>${members.length} members</span>
+                    </div>
+                    
+                    <div style="background: #f8fafc; padding: 0.65rem 0.85rem; border-left: 4px solid var(--indigo-600); margin-bottom: 1rem; border-radius: 4px; border: 1px solid var(--slate-200); border-left-width: 4px; text-align: left;">
+                        <strong style="color: var(--slate-800); font-size: 0.85rem; display: block; margin-bottom: 0.15rem;">Mutual Overlap Work Window:</strong>
+                        <span style="color: var(--indigo-700); font-size: 0.88rem; font-weight: 650;">${escapeHtml(teamOverlap)}</span>
+                    </div>
+
                     ${members.map(member => `
                         <div class="team-member-row">
                             <div>
@@ -430,7 +445,7 @@ function loadRosterPrintData(projectId) {
         });
 
         eligibleStrip.innerHTML = eligible.length ? `
-            <h4>Unassigned students</h4>
+            <h4>Unassigned students (${eligible.length})</h4>
             ${eligible.map(student => `
                 <div class="unassigned-student-row">
                     <div><strong>${escapeHtml(student.name)}</strong><small>${escapeHtml(student.college_id)} | ${escapeHtml(student.class)}</small></div>

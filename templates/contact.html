@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="contact-header">
+    <h1>Contact Us</h1>
+    <p>
+        Need help? Submit your request to the SyncTeam Administration Team.
+    </p>
+</div>
+
+<div class="contact-card">
+
+    <form id="contactForm">
+
+        <div class="form-group">
+            <label>User Type</label>
+            <select id="userType" onchange="updateFields()" required>
+                <option value="">Select User Type</option>
+                <option value="student">Student</option>
+                <option value="faculty">Faculty</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Full Name</label>
+            <input
+                type="text"
+                id="name"
+                placeholder="Enter your full name"
+                required
+            >
+        </div>
+
+        <div class="form-group">
+            <label id="classLabel">Class / Department</label>
+            <input
+                type="text"
+                id="className"
+                placeholder="Select User Type First"
+                required
+            >
+        </div>
+
+        <div class="form-group">
+            <label id="idLabel">Roll Number / Faculty ID</label>
+            <input
+                type="text"
+                id="rollNo"
+                placeholder="Select User Type First"
+                required
+            >
+        </div>
+
+        <div class="form-group">
+            <label>Subject</label>
+            <input
+                type="text"
+                id="subject"
+                placeholder="Issue Subject"
+                required
+            >
+        </div>
+
+        <div class="form-group">
+            <label>Message</label>
+            <textarea
+                id="message"
+                rows="6"
+                placeholder="Describe your issue or request..."
+                required
+            ></textarea>
+        </div>
+
+        <button type="submit" class="submit-btn">
+            Submit Request
+        </button>
+
+    </form>
+
+</div>
+
+<script>
+function updateFields() {
+
+    const userType = document.getElementById("userType").value;
+
+    const idLabel = document.getElementById("idLabel");
+    const rollInput = document.getElementById("rollNo");
+
+    const classLabel = document.getElementById("classLabel");
+    const classInput = document.getElementById("className");
+
+    if (userType === "student") {
+
+        idLabel.textContent = "Student Roll Number";
+        rollInput.placeholder = "Enter Student Roll Number";
+
+        classLabel.textContent = "Class";
+        classInput.placeholder = "Example: CS Class 1";
+
+    }
+
+    else if (userType === "faculty") {
+
+        idLabel.textContent = "Faculty ID";
+        rollInput.placeholder = "Enter Faculty ID";
+
+        classLabel.textContent = "Department";
+        classInput.placeholder = "Example: Computer Science";
+
+    }
+
+    else {
+
+        idLabel.textContent = "Roll Number / Faculty ID";
+        rollInput.placeholder = "Select User Type First";
+
+        classLabel.textContent = "Class / Department";
+        classInput.placeholder = "Select User Type First";
+
+    }
+}
+
+// Simple validation
+document.getElementById("contactForm").addEventListener("submit", function(event) {
+
+    const userType = document.getElementById("userType").value;
+    const name = document.getElementById("name").value.trim();
+    const className = document.getElementById("className").value.trim();
+    const rollNo = document.getElementById("rollNo").value.trim();
+    const subject = document.getElementById("subject").value.trim();
+    const message = document.getElementById("message").value.trim();
+
+    if (!userType || !name || !className || !rollNo || !subject || !message) {
+        event.preventDefault();
+        alert("Please fill all required fields.");
+        return;
+    }
+
+    alert("Your request has been submitted successfully.");
+});
+</script>
+
+{% endblock %}

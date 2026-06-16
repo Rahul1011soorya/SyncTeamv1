@@ -201,3 +201,51 @@ function clearStudentTeamMessages(projectId) {
     })
     .catch(() => notifySync("Unable to clear messages. Please try again.", "error"));
 }
+
+// ==========================================================================
+// 5. INTERNAL PEER-TO-PEER CHAT ACTIONS FOR TEAM HUB WORKSPACE
+// ==========================================================================
+
+function loadPeerTeamMessages(projectId) {
+    const messageList = document.getElementById('peer-team-messages');
+    if (!messageList) return;
+
+    fetch(`/api/project/${projectId}/messages?channel_type=peer_team`)
+    .then(res => res.json())
+    .then(messages => {
+        if (!Array.isArray(messages) || messages.length === 0) {
+            messageList.innerHTML = `<p class="muted-text" style="text-align:center; padding:1rem; color: var(--slate-600);">No team discussion logs recorded yet. Start the conversation above!</p>`;
+            return;
+        }
+        messageList.innerHTML = messages.map(m => `
+            <div style="margin-bottom:0.65rem; border-bottom:1px solid rgba(0,0,0,0.02); padding-bottom:0.4rem; text-align: left;">
+                <strong style="color:var(--slate-800); font-size:0.9rem;">${escapeHtml(m.sender)}</strong> 
+                <small style="color:var(--slate-500); font-size:0.75rem; margin-left:0.4rem;">${m.created_at}</small><br>
+                <span style="color:var(--slate-700); font-size:0.92rem; display: inline-block; margin-top: 0.15rem;">${escapeHtml(m.body)}</span>
+            </div>
+        `).join("");
+        
+        // Auto scroll container straight to the bottom to focus on the newest texts
+        messageList.scrollTop = messageList.scrollHeight;
+    });
+}
+
+function sendPeerTeamMessage(projectId) {
+    const field = document.getElementById('peer-team-message-body');
+    if (!field || !field.value.trim()) return;
+
+    fetch(`/api/project/${projectId}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ channel_type: 'peer_team', body: field.value.trim() })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.success) {
+            notifySync(data.message || data.error || "Message delivery rejected.", "error");
+            return;
+        }
+        field.value = ""; // Empty out the text box
+        loadPeerTeamMessages(projectId); // Reload logs instantly
+    });
+}
